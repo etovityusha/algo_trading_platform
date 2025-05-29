@@ -159,7 +159,7 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             method="POST", endpoint="/v5/order/create", params=order_params
         )
         return BuyResponse(
-            order_id=response["result"]["orderId"],
+            order_id=response.get("result", {}).get("orderId"),
             symbol=symbol,
             qty=amount,
             price=price,

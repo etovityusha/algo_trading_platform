@@ -4,7 +4,7 @@ from decimal import Decimal
 
 @dataclass
 class BuyResponse:
-    order_id: str
+    order_id: str | None
     symbol: str
     qty: Decimal
     price: Decimal
