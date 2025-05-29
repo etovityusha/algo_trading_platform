@@ -50,7 +50,7 @@ async def main():
                             stop_loss=1,
                             action=prediction.action,
                         )
-                    await broker.publish(message.model_dump(), queue=trading_queue)
+                        await broker.publish(message.model_dump(), queue=trading_queue)
                 await asyncio.sleep(600)
         finally:
             await broker.close()
