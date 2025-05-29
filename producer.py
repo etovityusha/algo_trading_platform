@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 ticker_list = [
     "BTCUSDT",
     "ETHUSDT",
-    "TONUSDT",
+    "XRPUSDT",
 ]
 
 
