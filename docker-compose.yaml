@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    ports:
+      - "5672:5672"   # AMQP протокол
+      - "15672:15672" # Management интерфейс
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    env_file: .env
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - trading_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  trand_producer:
+    build: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - .:/app
+    networks:
+      - trading_network
+    command: python3 producer.py
+
+  signal_consumer:
+    build: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - .:/app
+    networks:
+      - trading_network
+
+networks:
+  trading_network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
