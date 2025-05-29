@@ -44,8 +44,7 @@ async def main():
                         price = await client.get_ticker_price(prediction.symbol)
                         message = TradingSignal(
                             symbol=ticker,
-                            # hardcore 100usdt
-                            amount=(Decimal(100) / price).quantize(Decimal("0.00000001")),
+                            amount=Decimal("100"),  # hardcore 100usdt
                             take_profit=2,
                             stop_loss=1,
                             action=prediction.action,
@@ -54,7 +53,6 @@ async def main():
                 await asyncio.sleep(600)
         finally:
             await broker.close()
-
 
 
 if __name__ == "__main__":
