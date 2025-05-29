@@ -41,7 +41,6 @@ async def main():
                     prediction = await strategy.predict(ticker)
                     logger.info(f"Prediction for {ticker}: {prediction.action}")
                     if prediction.action == ActionEnum.BUY:
-                        price = await client.get_ticker_price(prediction.symbol)
                         message = TradingSignal(
                             symbol=ticker,
                             amount=Decimal("100"),  # hardcore 100usdt
