@@ -1,45 +1,89 @@
-version: '3.8'
 services:
-  rabbitmq:
-    image: rabbitmq:3.12-management
-    ports:
-      - "5672:5672"   # AMQP протокол
-      - "15672:15672" # Management интерфейс
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
-    env_file: .env
+  db:
+    image: postgres:16.4
+    restart: always
+    env_file:
+      - .env
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    command: [
+      "postgres",
+      "-c", "port=${POSTGRES_PORT}"
+    ]
     networks:
       - trading_network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 10s
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}", "-p", "${POSTGRES_PORT}" ]
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
 
-  trand_producer:
-    build: .
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    env_file: .env
-    volumes:
-      - .:/app
+
+  rabbitmq:
+    image: rabbitmq:4.1.0
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    ports:
+      - "5672:5672"
     networks:
       - trading_network
-    command: python3 producer.py
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
 
-  signal_consumer:
-    build: .
+  base:
+    image: trading-base
+    build:
+      context: .
+      dockerfile: docker/base/Dockerfile
+
+  producer-base:
+    image: producer-base
+    build:
+      context: .
+      dockerfile: docker/producers/Dockerfile.base
+    depends_on:
+      - base
+
+  consumer:
+    build:
+      context: .
+      dockerfile: docker/consumer/Dockerfile
+    env_file: .env
     depends_on:
       rabbitmq:
         condition: service_healthy
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - trading_network
+
+  trand:
+    build:
+      context: .
+      dockerfile: docker/producers/Dockerfile.trand
     env_file: .env
-    volumes:
-      - .:/app
+    depends_on:
+      producer-base:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
     networks:
       - trading_network
 
@@ -49,3 +93,4 @@ networks:
 
 volumes:
   rabbitmq_data:
+  postgres_data:

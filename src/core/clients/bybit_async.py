@@ -7,9 +7,10 @@ from typing import Optional
 import aiohttp
 from urllib.parse import urlencode
 
+from uuid_extensions import uuid7
 
-from clients.dto import Candle, BuyResponse
-from clients.interface import AbstractReadOnlyClient, AbstractWriteClient
+from src.core.clients.dto import Candle, BuyResponse
+from src.core.clients.interface import AbstractReadOnlyClient, AbstractWriteClient
 
 
 class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
@@ -139,18 +140,18 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             "timeInForce": "GTC",
         }
 
+        stop_price: Decimal | None = None
         if stop_loss_percent:
-            stop_price = (price * (1 - Decimal(stop_loss_percent) / 100)).quantize(
-                self._lot_precision["USDT"], rounding=ROUND_DOWN
-            )
+            stop_price = self._calculate_stop_loss_price(price, stop_loss_percent)
             order_params["stopLoss"] = str(stop_price)
             order_params["slTriggerBy"] = "LastPrice"
             order_params["slOrderType"] = "Market"
 
+        take_profit_price: Decimal | None = None
         if take_profit_percent:
-            take_profit_price = (
-                price * (1 + Decimal(take_profit_percent) / 100)
-            ).quantize(self._lot_precision["USDT"], rounding=ROUND_DOWN)
+            take_profit_price = self._calculate_take_profit_price(
+                price, take_profit_percent
+            )
             order_params["takeProfit"] = str(take_profit_price)
             order_params["tpTriggerBy"] = "LastPrice"
             order_params["tpOrderType"] = "Market"
@@ -158,9 +159,55 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
         response = await self._request(
             method="POST", endpoint="/v5/order/create", params=order_params
         )
+        order_id = response.get("result", {}).get("orderId")
         return BuyResponse(
-            order_id=response.get("result", {}).get("orderId"),
+            order_id=order_id,
             symbol=symbol,
             qty=amount,
             price=price,
+            stop_loss_price=stop_price,
+            take_profit_price=take_profit_price,
+        )
+
+    def _calculate_stop_loss_price(
+        self, price: Decimal, stop_loss_percent: float
+    ) -> Decimal:
+        return (price * (1 - Decimal(stop_loss_percent) / 100)).quantize(
+            self._lot_precision["USDT"], rounding=ROUND_DOWN
+        )
+
+    def _calculate_take_profit_price(
+        self, price: Decimal, take_profit_percent: float
+    ) -> Decimal:
+        return (price * (1 + Decimal(take_profit_percent) / 100)).quantize(
+            self._lot_precision["USDT"], rounding=ROUND_DOWN
+        )
+
+
+class BybitStubWriteClient(BybitAsyncClient):
+    """Same as BybitAsyncClient, but overrides write methods to return fake responses"""
+
+    async def buy(
+        self,
+        symbol: str,
+        usdt_amount: Decimal,
+        stop_loss_percent: Optional[float] = None,
+        take_profit_percent: Optional[float] = None,
+    ) -> BuyResponse:
+        price = await self.get_ticker_price(symbol)
+        return BuyResponse(
+            order_id=uuid7(as_type="str"),
+            symbol=symbol,
+            qty=usdt_amount,
+            price=price,
+            stop_loss_price=(
+                self._calculate_stop_loss_price(price, stop_loss_percent)
+                if stop_loss_percent
+                else None
+            ),
+            take_profit_price=(
+                self._calculate_take_profit_price(price, take_profit_percent)
+                if take_profit_percent
+                else None
+            ),
         )

@@ -1,0 +1,9 @@
+aiohttp==3.12.3
+environs==14.2.0
+pydantic>=2.5.2
+pydantic-settings>=2.8.0
+python-dotenv>=1.0.0
+faststream[rabbit]>=0.4.5
+dishka>=0.3.0
+uuid7==0.1.0
+faststream[cli]

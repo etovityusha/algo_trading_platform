@@ -8,6 +8,8 @@ class BuyResponse:
     symbol: str
     qty: Decimal
     price: Decimal
+    stop_loss_price: Decimal | None
+    take_profit_price: Decimal | None
 
 
 @dataclass

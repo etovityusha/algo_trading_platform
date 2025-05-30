@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from enums import ActionEnum
+from src.core.enums import ActionEnum
 
 
 class TradingSignal(BaseModel):
@@ -12,3 +12,4 @@ class TradingSignal(BaseModel):
     take_profit: Optional[float] = None
     stop_loss: Optional[float] = None
     action: ActionEnum = ActionEnum.BUY
+    source: str

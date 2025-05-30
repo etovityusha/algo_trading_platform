@@ -1,11 +1,11 @@
 import numpy as np
 
-from clients.bybit_async import BybitAsyncClient
-from strategies.dto import Prediction, ActionEnum
-from clients.interface import AbstractReadOnlyClient
+from src.core.clients.interface import AbstractReadOnlyClient
+from src.producers.strategy import Prediction, Strategy
+from src.core.enums import ActionEnum
 
 
-class TrandStrategy:
+class TrandStrategy(Strategy):
     def __init__(self, client: AbstractReadOnlyClient) -> None:
         self._client = client
 
