@@ -22,11 +22,12 @@ services:
     deploy:
       resources:
         limits:
+          memory: 512M
           cpus: "1.0"
 
 
   rabbitmq:
-    image: rabbitmq:4.1.0
+    image: rabbitmq:4.1.0-alpine
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
@@ -43,13 +44,25 @@ services:
     deploy:
       resources:
         limits:
+          memory: 256M
           cpus: "0.5"
 
   base:
     image: trading-base
     build:
       context: .
-      dockerfile: docker/base/Dockerfile
+      dockerfile: docker/Dockerfile.base
+
+  migrator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.migrator
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - trading_network
 
   producer-base:
     image: producer-base

@@ -1,0 +1,89 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv/
+env/
+venv/
+ENV/
+dist/
+build/
+*.egg-info/
+.eggs/
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+*.cover
+htmlcov/
+.tox/
+.nox/
+
+# Development
+.git/
+.gitignore
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Project specific
+docker/
+!docker/Dockerfile*
+!docker/*/Dockerfile*
+data/
+logs/
+*.log
+.DS_Store
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Cache
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Local development
+*.local
+local_settings.py
+example.env
+
+# Debug
+.debug/
+debug.py
+
+# Database
+*.sqlite3
+*.db
+
+# Editor/IDE specific
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# System
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# Virtual environment
+.python-version
+poetry.lock
+pdm.lock
