@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ConsumerSettings(BaseSettings):
@@ -10,7 +10,9 @@ class ConsumerSettings(BaseSettings):
     BYBIT_IS_DEMO: bool = True
     SQLALCHEMY_DATABASE_URI: str
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        validate_default=True,
+    )

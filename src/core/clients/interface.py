@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Optional, List
+
 from .dto import BuyResponse, Candle
 
 
@@ -8,7 +8,7 @@ class AbstractReadOnlyClient(ABC):
     @abstractmethod
     async def get_candles(
         self, symbol: str, interval: str = "15", limit: int = 200
-    ) -> List[Candle]:
+    ) -> list[Candle]:
         pass
 
     @abstractmethod
@@ -27,7 +27,7 @@ class AbstractWriteClient(ABC):
         self,
         symbol: str,
         usdt_amount: Decimal,
-        stop_loss_percent: Optional[float] = None,
-        take_profit_percent: Optional[float] = None,
+        stop_loss_percent: float | None = None,
+        take_profit_percent: float | None = None,
     ) -> BuyResponse:
         pass

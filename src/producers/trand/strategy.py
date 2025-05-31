@@ -1,8 +1,9 @@
 import numpy as np
+from numpy.typing import NDArray
 
 from src.core.clients.interface import AbstractReadOnlyClient
-from src.producers.strategy import Prediction, Strategy
 from src.core.enums import ActionEnum
+from src.producers.strategy import Prediction, Strategy
 
 
 class TrandStrategy(Strategy):
@@ -11,13 +12,13 @@ class TrandStrategy(Strategy):
 
     async def predict(self, symbol: str) -> Prediction:
         candles = await self._client.get_candles(symbol, interval="30", limit=500)
-        closes = np.array([float(c.close) for c in candles])
-        highs = np.array([float(c.high) for c in candles])
-        lows = np.array([float(c.low) for c in candles])
+        closes: NDArray[np.float64] = np.array([float(c.close) for c in candles])
+        highs: NDArray[np.float64] = np.array([float(c.high) for c in candles])
+        lows: NDArray[np.float64] = np.array([float(c.low) for c in candles])
 
-        ma_period = 20
-        rsi_period = 14
-        adx_period = 14
+        ma_period: int = 20
+        rsi_period: int = 14
+        adx_period: int = 14
 
         ma = self._moving_average(closes, ma_period)
         rsi = self._relative_strength_index(closes, rsi_period)
@@ -37,25 +38,31 @@ class TrandStrategy(Strategy):
         return Prediction(symbol=symbol, action=action)
 
     @classmethod
-    def _moving_average(cls, values, period):
+    def _moving_average(cls, values: NDArray[np.float64], period: int) -> NDArray[np.float64]:
         return np.convolve(values, np.ones(period), "valid") / period
 
     @classmethod
-    def _relative_strength_index(cls, values, period=14):
+    def _relative_strength_index(
+        cls, values: NDArray[np.float64], period: int = 14
+    ) -> NDArray[np.float64]:
         deltas = np.diff(values)
         ups = np.maximum(deltas, 0)
         downs = -np.minimum(deltas, 0)
         roll_up = np.convolve(ups, np.ones(period), "valid") / period
         roll_down = np.convolve(downs, np.ones(period), "valid") / period
-        rs = np.divide(
-            roll_up, roll_down, out=np.zeros_like(roll_up), where=roll_down != 0
-        )
+        rs = np.divide(roll_up, roll_down, out=np.zeros_like(roll_up), where=roll_down != 0)
         rsi = 100 - (100 / (1 + rs))
         pad_length = len(values) - len(rsi)
         return np.concatenate([np.full(pad_length, np.nan), rsi])
 
     @classmethod
-    def _adx(cls, high, low, close, period=14):
+    def _adx(
+        cls,
+        high: NDArray[np.float64],
+        low: NDArray[np.float64],
+        close: NDArray[np.float64],
+        period: int = 14,
+    ) -> NDArray[np.float64]:
         plus_dm = np.diff(high, prepend=high[0])
         minus_dm = np.diff(low, prepend=low[0])
         plus_dm = np.where((plus_dm > minus_dm) & (plus_dm > 0), plus_dm, 0)
@@ -70,13 +77,8 @@ class TrandStrategy(Strategy):
 
         plus_di_raw = np.convolve(plus_dm[1:], np.ones(period), "valid") / period
         minus_di_raw = np.convolve(minus_dm[1:], np.ones(period), "valid") / period
-
-        plus_di = np.divide(
-            100 * plus_di_raw, atr, out=np.zeros_like(atr), where=atr != 0
-        )
-        minus_di = np.divide(
-            100 * minus_di_raw, atr, out=np.zeros_like(atr), where=atr != 0
-        )
+        plus_di = np.divide(100 * plus_di_raw, atr, out=np.zeros_like(atr), where=atr != 0)
+        minus_di = np.divide(100 * minus_di_raw, atr, out=np.zeros_like(atr), where=atr != 0)
         denom = plus_di + minus_di
         dx = np.divide(
             100 * np.abs(plus_di - minus_di),

@@ -2,18 +2,18 @@ import asyncio
 import logging
 from decimal import Decimal
 
-from faststream.rabbit import RabbitQueue, RabbitBroker
+from faststream.rabbit import RabbitBroker, RabbitQueue
 
-from src.logger import init_logging
 from src.core.clients.bybit_async import BybitAsyncClient
 from src.core.dto import TradingSignal
+from src.logger import init_logging
 from src.producers.trand.config.settings import TrandSettings
 from src.producers.trand.strategy import TrandStrategy
 
 logger = logging.getLogger(__name__)
 
 
-async def main():
+async def main() -> None:
     init_logging()
     settings = TrandSettings()
     broker = RabbitBroker(

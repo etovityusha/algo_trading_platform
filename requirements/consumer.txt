@@ -65,6 +65,8 @@ propcache==0.3.1
     # via
     #   aiohttp
     #   yarl
+psycopg2-binary==2.9.10
+    # via -r requirements/consumer.in
 pydantic==2.11.5
     # via
     #   -r requirements/core.in

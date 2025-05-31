@@ -22,7 +22,5 @@ class TradingService:
             take_profit_percent=signal.take_profit,
             stop_loss_percent=signal.stop_loss,
         )
-        logger.info(
-            f"Buy signal processed for {signal.symbol}; order id: {response.order_id}"
-        )
+        logger.info(f"Buy signal processed for {signal.symbol}; order id: {response.order_id}")
         return response

@@ -1,15 +1,15 @@
-import time
-import hmac
 import hashlib
+import hmac
 import json
-from decimal import Decimal, ROUND_DOWN
-from typing import Optional
-import aiohttp
+import time
+from decimal import ROUND_DOWN, Decimal
+from typing import Any
 from urllib.parse import urlencode
 
+import aiohttp
 from uuid_extensions import uuid7
 
-from src.core.clients.dto import Candle, BuyResponse
+from src.core.clients.dto import BuyResponse, Candle
 from src.core.clients.interface import AbstractReadOnlyClient, AbstractWriteClient
 
 
@@ -17,30 +17,28 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
     def __init__(self, api_key: str, api_secret: str, is_demo: bool = True) -> None:
         self._api_key = api_key
         self._api_secret = api_secret
-        self._base_url = (
-            "https://api-testnet.bybit.com" if is_demo else "https://api.bybit.com"
-        )
+        self._base_url = "https://api-testnet.bybit.com" if is_demo else "https://api.bybit.com"
         self._lot_precision = {
             "USDT": Decimal("0.01"),
         }
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "BybitAsyncClient":
         self._session = aiohttp.ClientSession()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         await self._session.close()
 
-    def _generate_signature(self, params: str, timestamp: int) -> str:
+    def _generate_signature(self, params: dict[str, Any] | str, timestamp: int) -> str:
         """Generate signature for authentication"""
         param_str = str(timestamp) + self._api_key + "5000" + str(params)
-        hash = hmac.new(
-            bytes(self._api_secret, "utf-8"), param_str.encode("utf-8"), hashlib.sha256
-        )
+        hash = hmac.new(bytes(self._api_secret, "utf-8"), param_str.encode("utf-8"), hashlib.sha256)
         signature = hash.hexdigest()
         return signature
 
-    async def get_candles(self, symbol: str, interval: str = "15", limit: int = 200):
+    async def get_candles(
+        self, symbol: str, interval: str = "15", limit: int = 200
+    ) -> list[Candle]:
         response = await self._request(
             method="GET",
             endpoint="/v5/market/kline",
@@ -71,9 +69,12 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             endpoint="/v5/market/instruments-info",
             params={"category": "spot", "symbol": symbol},
         )
-        return response["result"]["list"][0]
+        result: dict = response["result"]["list"][0]
+        return result
 
-    async def _request(self, method: str, endpoint: str, params: dict = None) -> dict:
+    async def _request(
+        self, method: str, endpoint: str, params: dict | None = None
+    ) -> dict[str, Any]:
         """Make authenticated request to Bybit API"""
         timestamp = int(time.time() * 1000)
         headers = {
@@ -88,9 +89,7 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             if params:
                 query_string = urlencode(params)
                 endpoint = f"{endpoint}?{query_string}"
-            headers["X-BAPI-SIGN"] = self._generate_signature(
-                params if params else "", timestamp
-            )
+            headers["X-BAPI-SIGN"] = self._generate_signature(params if params else "", timestamp)
         else:
             # For POST requests, sign the request body
             headers["X-BAPI-SIGN"] = self._generate_signature(
@@ -104,7 +103,7 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             headers=headers,
             json=params if method == "POST" else None,
         ) as response:
-            return await response.json()
+            return dict(await response.json())
 
     async def get_ticker_price(self, symbol: str) -> Decimal:
         """Get current ticker information"""
@@ -119,8 +118,8 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
         self,
         symbol: str,
         usdt_amount: Decimal,
-        stop_loss_percent: Optional[float] = None,
-        take_profit_percent: Optional[float] = None,
+        stop_loss_percent: float | None = None,
+        take_profit_percent: float | None = None,
     ) -> BuyResponse:
         precision = self._lot_precision.get(symbol)
         if not precision:
@@ -149,9 +148,7 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
 
         take_profit_price: Decimal | None = None
         if take_profit_percent:
-            take_profit_price = self._calculate_take_profit_price(
-                price, take_profit_percent
-            )
+            take_profit_price = self._calculate_take_profit_price(price, take_profit_percent)
             order_params["takeProfit"] = str(take_profit_price)
             order_params["tpTriggerBy"] = "LastPrice"
             order_params["tpOrderType"] = "Market"
@@ -169,16 +166,12 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             take_profit_price=take_profit_price,
         )
 
-    def _calculate_stop_loss_price(
-        self, price: Decimal, stop_loss_percent: float
-    ) -> Decimal:
+    def _calculate_stop_loss_price(self, price: Decimal, stop_loss_percent: float) -> Decimal:
         return (price * (1 - Decimal(stop_loss_percent) / 100)).quantize(
             self._lot_precision["USDT"], rounding=ROUND_DOWN
         )
 
-    def _calculate_take_profit_price(
-        self, price: Decimal, take_profit_percent: float
-    ) -> Decimal:
+    def _calculate_take_profit_price(self, price: Decimal, take_profit_percent: float) -> Decimal:
         return (price * (1 + Decimal(take_profit_percent) / 100)).quantize(
             self._lot_precision["USDT"], rounding=ROUND_DOWN
         )
@@ -191,8 +184,8 @@ class BybitStubWriteClient(BybitAsyncClient):
         self,
         symbol: str,
         usdt_amount: Decimal,
-        stop_loss_percent: Optional[float] = None,
-        take_profit_percent: Optional[float] = None,
+        stop_loss_percent: float | None = None,
+        take_profit_percent: float | None = None,
     ) -> BuyResponse:
         price = await self.get_ticker_price(symbol)
         return BuyResponse(

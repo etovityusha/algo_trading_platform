@@ -6,17 +6,16 @@ Create Date: 2025-05-30 09:35:34.846104
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "aacfc5fd4609"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -25,9 +24,7 @@ def upgrade() -> None:
     op.create_table(
         "deal",
         sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
+        sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
         sa.Column("external_id", sa.String(), nullable=True),
         sa.Column("symbol", sa.String(), nullable=False),
         sa.Column("qty", sa.Numeric(precision=20, scale=10), nullable=False),

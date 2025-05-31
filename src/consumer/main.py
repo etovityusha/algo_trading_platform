@@ -1,13 +1,13 @@
 import logging
 
-from faststream import FastStream, Logger
-from faststream.rabbit import RabbitQueue, QueueType, RabbitBroker
+from faststream import FastStream
+from faststream.rabbit import QueueType, RabbitBroker, RabbitQueue
 
-from src.core.dto import TradingSignal
-from src.logger import init_logging
 from src.consumer.config.settings import ConsumerSettings
 from src.consumer.services.trading import TradingService
 from src.core.clients.bybit_async import BybitAsyncClient
+from src.core.dto import TradingSignal
+from src.logger import init_logging
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ settings = ConsumerSettings()
 broker = RabbitBroker(
     f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASS}@{settings.RABBITMQ_HOST}"
 )
-app = FastStream(logger=Logger(logger), broker=broker)
+app = FastStream(logger=logger, broker=broker)
 
 queue = RabbitQueue(
     name="trading_signals",
@@ -25,7 +25,7 @@ queue = RabbitQueue(
 )
 
 
-@broker.subscriber(queue)
+@broker.subscriber(queue)  # type: ignore[misc]
 async def process_trading_signal(signal: TradingSignal) -> None:
     async with BybitAsyncClient(
         api_key=settings.BYBIT_API_KEY,
@@ -34,7 +34,3 @@ async def process_trading_signal(signal: TradingSignal) -> None:
     ) as client:
         trading_service = TradingService(client=client)
         await trading_service.process_signal(signal)
-
-
-if __name__ == "__main__":
-    app.run()
