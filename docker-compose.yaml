@@ -29,8 +29,8 @@ services:
   rabbitmq:
     image: rabbitmq:4.1.0-alpine
     environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+      - RABBITMQ_DEFAULT_USER=${RABBIT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBIT_PASS}
     ports:
       - "5672:5672"
     networks:

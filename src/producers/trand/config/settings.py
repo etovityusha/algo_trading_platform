@@ -1,13 +1,22 @@
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class RabbitSettings(BaseModel):
+    USER: str
+    PASS: str
+    HOST: str
+
+
+class BybitReadOnlySettings(BaseModel):
+    API_KEY: str
+    API_SECRET: str
+    IS_DEMO: bool = True
 
 
 class TrandSettings(BaseSettings):
-    RABBITMQ_USER: str
-    RABBITMQ_PASS: str
-    RABBITMQ_HOST: str
-    BYBIT_RO_API_KEY: str
-    BYBIT_RO_API_SECRET: str
-    BYBIT_RO_IS_DEMO: bool = True
+    rabbit: RabbitSettings
+    bybit_ro: BybitReadOnlySettings
 
     TICKERS: list[str] = [
         "BTCUSDT",
@@ -15,7 +24,9 @@ class TrandSettings(BaseSettings):
         "XRPUSDT",
     ]
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        env_nested_delimiter="_",
+    )

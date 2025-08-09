@@ -17,13 +17,13 @@ async def main() -> None:
     init_logging()
     settings = TrandSettings()
     broker = RabbitBroker(
-        f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASS}@{settings.RABBITMQ_HOST}"
+        f"amqp://{settings.rabbit.USER}:{settings.rabbit.PASS}@{settings.rabbit.HOST}"
     )
     await broker.connect()
     async with BybitAsyncClient(
-        api_key=settings.BYBIT_RO_API_KEY,
-        api_secret=settings.BYBIT_RO_API_SECRET,
-        is_demo=settings.BYBIT_RO_IS_DEMO,
+        api_key=settings.bybit_ro.API_KEY,
+        api_secret=settings.bybit_ro.API_SECRET,
+        is_demo=settings.bybit_ro.IS_DEMO,
     ) as client:
         strategy = TrandStrategy(client=client)
         trading_queue = RabbitQueue("trading_signals", durable=True)
