@@ -35,8 +35,9 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBIT__USER}
       - RABBITMQ_DEFAULT_PASS=${RABBIT__PASS}
+      - RABBITMQ_NODE_PORT=${RABBIT__PORT}
     ports:
-      - "5672:5672"
+      - "${RABBIT__PORT}:${RABBIT__PORT}"
     networks:
       - trading_network
     healthcheck:

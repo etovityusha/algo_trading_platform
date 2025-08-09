@@ -17,7 +17,7 @@ async def main() -> None:
     init_logging()
     settings = TrandSettings()
     broker = RabbitBroker(
-        f"amqp://{settings.rabbit.USER}:{settings.rabbit.PASS}@{settings.rabbit.HOST}"
+        f"amqp://{settings.rabbit.USER}:{settings.rabbit.PASS}@{settings.rabbit.HOST}:{settings.rabbit.PORT}"
     )
     await broker.connect()
     async with BybitAsyncClient(

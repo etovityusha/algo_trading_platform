@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 init_logging()
 settings = ConsumerSettings()
 broker = RabbitBroker(
-    f"amqp://{settings.rabbit.USER}:{settings.rabbit.PASS}@{settings.rabbit.HOST}"
+    f"amqp://{settings.rabbit.USER}:{settings.rabbit.PASS}@{settings.rabbit.HOST}:{settings.rabbit.PORT}"
 )
 app = FastStream(logger=logger, broker=broker)
 

@@ -6,6 +6,7 @@ class RabbitSettings(BaseModel):
     USER: str
     PASS: str
     HOST: str
+    PORT: int = 5672
 
 
 class BybitReadOnlySettings(BaseModel):
