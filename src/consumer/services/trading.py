@@ -1,5 +1,6 @@
 import logging
 
+from src.consumer.uow import UnitOfWork
 from src.core.clients.bybit_async import BybitAsyncClient
 from src.core.clients.dto import BuyResponse
 from src.core.dto import TradingSignal
@@ -9,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class TradingService:
-    def __init__(self, client: BybitAsyncClient):
+    def __init__(self, client: BybitAsyncClient, uow: UnitOfWork | None = None):
         self.client = client
+        self.uow = uow
 
     async def process_signal(self, signal: TradingSignal) -> BuyResponse | None:
         if signal.action != ActionEnum.BUY:
@@ -23,4 +25,8 @@ class TradingService:
             stop_loss_percent=signal.stop_loss,
         )
         logger.info(f"Buy signal processed for {signal.symbol}; order id: {response.order_id}")
+        # persist deal if uow is configured
+        if self.uow is not None:
+            async with self.uow() as uow_session:
+                await uow_session.deals.create_from_buy(signal=signal, response=response)
         return response

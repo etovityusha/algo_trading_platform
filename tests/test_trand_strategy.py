@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock
 
 import numpy as np
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 
 from src.core.clients.dto import Candle
 from src.core.enums import ActionEnum
@@ -29,11 +28,11 @@ def make_candles(values: list[float]) -> list[Candle]:
 
 @pytest.mark.asyncio
 async def test_predict_buy_when_trend_up_and_rsi_ok_and_adx_strong(
-    monkeypatch: MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client = AsyncMock()
     # Increasing series to trigger BUY (close > MA), RSI below 70, ADX > 25
-    values = list(np.linspace(100, 140, 600))
+    values: list[float] = list(map(float, np.linspace(100, 140, 600)))
     client.get_candles.return_value = make_candles(values)
 
     strategy = TrandStrategy(client=client)
@@ -46,11 +45,11 @@ async def test_predict_buy_when_trend_up_and_rsi_ok_and_adx_strong(
 
 @pytest.mark.asyncio
 async def test_predict_sell_when_trend_down_and_rsi_ok_and_adx_strong(
-    monkeypatch: MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client = AsyncMock()
     # Decreasing series to trigger SELL (close < MA), RSI above 30, ADX > 25
-    values = list(np.linspace(140, 100, 600))
+    values: list[float] = list(map(float, np.linspace(140, 100, 600)))
     client.get_candles.return_value = make_candles(values)
 
     strategy = TrandStrategy(client=client)

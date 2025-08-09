@@ -1,12 +1,11 @@
 from decimal import Decimal
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 
 from src.core.clients.bybit_async import BybitAsyncClient
 
 
-def test_generate_signature_is_deterministic(monkeypatch: MonkeyPatch) -> None:
+def test_generate_signature_is_deterministic(monkeypatch: pytest.MonkeyPatch) -> None:
     client = BybitAsyncClient(api_key="k", api_secret="s", is_demo=True)
 
     # Fixed timestamp for reproducibility
@@ -32,7 +31,7 @@ def test_calculate_stop_and_take_profit_prices() -> None:
 
 @pytest.mark.asyncio
 async def test_buy_uses_instrument_precision_and_builds_order_and_parses_response(
-    monkeypatch: MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client = BybitAsyncClient(api_key="k", api_secret="s", is_demo=True)
 
@@ -42,7 +41,7 @@ async def test_buy_uses_instrument_precision_and_builds_order_and_parses_respons
     async def fake_get_ticker_price(symbol: str) -> Decimal:
         return Decimal("100")
 
-    async def fake_request(method: str, endpoint: str, params: dict | None = None):
+    async def fake_request(method: str, endpoint: str, params: dict | None = None) -> dict:
         assert method == "POST"
         assert endpoint == "/v5/order/create"
         assert params is not None
@@ -72,10 +71,10 @@ async def test_buy_uses_instrument_precision_and_builds_order_and_parses_respons
 
 
 @pytest.mark.asyncio
-async def test_get_candles_parses_response(monkeypatch: MonkeyPatch) -> None:
+async def test_get_candles_parses_response(monkeypatch: pytest.MonkeyPatch) -> None:
     client = BybitAsyncClient(api_key="k", api_secret="s", is_demo=True)
 
-    async def fake_request(method: str, endpoint: str, params: dict | None = None):
+    async def fake_request(method: str, endpoint: str, params: dict | None = None) -> dict:
         assert method == "GET"
         assert endpoint.startswith("/v5/market/kline")
         return {
@@ -96,10 +95,10 @@ async def test_get_candles_parses_response(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_ticker_price_parses_last_price(monkeypatch: MonkeyPatch) -> None:
+async def test_get_ticker_price_parses_last_price(monkeypatch: pytest.MonkeyPatch) -> None:
     client = BybitAsyncClient(api_key="k", api_secret="s", is_demo=True)
 
-    async def fake_request(method: str, endpoint: str, params: dict | None = None):
+    async def fake_request(method: str, endpoint: str, params: dict | None = None) -> dict:
         assert method == "GET"
         assert endpoint == "/v5/market/tickers"
         return {
@@ -118,7 +117,7 @@ async def test_get_ticker_price_parses_last_price(monkeypatch: MonkeyPatch) -> N
 
 
 @pytest.mark.asyncio
-async def test_stub_write_client_buy(monkeypatch: MonkeyPatch) -> None:
+async def test_stub_write_client_buy(monkeypatch: pytest.MonkeyPatch) -> None:
 
     async def fake_get_ticker_price(symbol: str) -> Decimal:
         return Decimal("100")

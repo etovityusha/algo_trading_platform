@@ -40,7 +40,7 @@ frozenlist==1.6.0
     #   aiohttp
     #   aiosignal
 greenlet==3.2.2
-    # via sqlalchemy
+    # via -r requirements/consumer.in
 idna==3.10
     # via
     #   anyio

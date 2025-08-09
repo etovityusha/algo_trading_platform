@@ -61,7 +61,7 @@ def run_migrations_online() -> None:
     # this callback is used to prevent an auto-migration from being generated
     # when there are no changes to the schema
     # reference: http://alembic.zzzcomputing.com/en/latest/cookbook.html
-    def process_revision_directives(context, revision, directives):
+    def process_revision_directives(context, revision, directives) -> None:  # type: ignore[no-untyped-def]
         if getattr(config.cmd_opts, "autogenerate", False):
             script = directives[0]
             if script.upgrade_ops.is_empty():
@@ -69,7 +69,7 @@ def run_migrations_online() -> None:
                 logger.info("No changes in schema detected.")
 
     # hook to prevent including postgis system table in migrations
-    def include_name(name, type_, parent_names):
+    def include_name(name, type_, parent_names):  # type: ignore[no-untyped-def]
         excluded_tables = {
             "spatial_ref_sys",  # postgis system table
         }
@@ -84,7 +84,7 @@ def run_migrations_online() -> None:
         env.read_env()
         db_url: str = env.str("SQLALCHEMY_DATABASE_URI")
         connectable = engine_from_config(
-            config.get_section(config.config_ini_section),
+            config.get_section(config.config_ini_section) or {},
             prefix="sqlalchemy.",
             poolclass=pool.NullPool,
             url=db_url,

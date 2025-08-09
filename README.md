@@ -22,3 +22,24 @@ To add a new trading strategy:
 3. Add configuration to `docker-compose.yaml`
 4. Create a Dockerfile in `docker/producers/`
 
+## ⚙️ Updating dependencies (requirements) with uv
+
+When any `requirements/*.in` files change, recompile the corresponding `requirements/*.txt` files using uv.
+
+Compile each .in to its .txt:
+
+```bash
+uv pip compile requirements/core.in -o requirements/core.txt
+uv pip compile requirements/consumer.in -o requirements/consumer.txt
+uv pip compile requirements/producer.in -o requirements/producer.txt
+uv pip compile requirements/migrator.in -o requirements/migrator.txt
+uv pip compile requirements/dev.in -o requirements/dev.txt
+```
+
+Compile all at once (bash):
+
+```bash
+for f in requirements/*.in; do \
+  uv pip compile "$f" -o "requirements/$(basename "$f" .in).txt"; \
+done
+```
