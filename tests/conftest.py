@@ -49,55 +49,95 @@ def _build_async_dsn() -> str:
     host = os.environ.get("POSTGRES_HOST", "localhost")
     return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
 
-
-@pytest.fixture(scope="session", autouse=True)
-def temp_database() -> Iterator[str]:
-    """Create a temporary database for the whole test session and drop it at the end."""
+def _admin_sync_dsn() -> str:
     user = os.environ.get("POSTGRES_USER", "postgres")
     password = os.environ.get("POSTGRES_PASSWORD", "postgres")
     port = os.environ.get("POSTGRES_PORT", "5432")
     host = os.environ.get("POSTGRES_HOST", "localhost")
     maintenance_db = os.environ.get("POSTGRES_MAINTENANCE_DB", "postgres")
+    return f"postgresql://{user}:{password}@{host}:{port}/{maintenance_db}"
 
-    admin_sync_dsn = f"postgresql://{user}:{password}@{host}:{port}/{maintenance_db}"
-    db_name = f"test_{uuid4().hex}"
+
+@pytest.fixture(scope="session", autouse=True)
+def template_database() -> Iterator[str]:
+    """Create a template database once per session, apply migrations, drop at end.
+
+    Per-test databases will be cloned from this template using CREATE DATABASE ... TEMPLATE ...
+    """
+    user = os.environ.get("POSTGRES_USER", "postgres")
+    password = os.environ.get("POSTGRES_PASSWORD", "postgres")
+    port = os.environ.get("POSTGRES_PORT", "5432")
+    host = os.environ.get("POSTGRES_HOST", "localhost")
+
+    admin_sync_dsn = _admin_sync_dsn()
+    template_db_name = f"test_template_{uuid4().hex}"
 
     admin_engine: SyncEngine = create_sync_engine(admin_sync_dsn, isolation_level="AUTOCOMMIT")
     with admin_engine.connect() as conn:
-        conn.execute(text(f"CREATE DATABASE {db_name}"))
+        conn.execute(text(f"CREATE DATABASE {template_db_name}"))
 
-    # Expose DSN for Alembic/tests in sync form; async fixtures will adapt it
+    # Run migrations against the template DB
     os.environ["SQLALCHEMY_DATABASE_URI"] = (
-        f"postgresql://{user}:{password}@{host}:{port}/{db_name}"
+        f"postgresql://{user}:{password}@{host}:{port}/{template_db_name}"
     )
+    alembic_cfg = Config(str(pathlib.Path(PROJECT_ROOT) / "alembic.ini"))
+    command.upgrade(alembic_cfg, "head")
 
     try:
-        yield db_name
+        yield template_db_name
     finally:
-        # Terminate connections and drop database
+        # Ensure no lingering connections and drop template DB
         with admin_engine.connect() as conn:
             conn.execute(
                 text(
                     "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
                     "WHERE datname = :dbname AND pid <> pg_backend_pid()"
                 ),
-                {"dbname": db_name},
+                {"dbname": template_db_name},
             )
-            conn.execute(text(f"DROP DATABASE IF EXISTS {db_name}"))
+            conn.execute(text(f"DROP DATABASE IF EXISTS {template_db_name}"))
         admin_engine.dispose()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def apply_migrations(temp_database: str) -> None:
-    sync_dsn = _build_sync_dsn()
-    os.environ["SQLALCHEMY_DATABASE_URI"] = sync_dsn
-    alembic_cfg = Config(str(pathlib.Path(PROJECT_ROOT) / "alembic.ini"))
-    command.upgrade(alembic_cfg, "head")
+@pytest.fixture()
+def test_database(template_database: str) -> Iterator[str]:
+    """Create a per-test database cloned from the template; drop after test."""
+    user = os.environ.get("POSTGRES_USER", "postgres")
+    password = os.environ.get("POSTGRES_PASSWORD", "postgres")
+    port = os.environ.get("POSTGRES_PORT", "5432")
+    host = os.environ.get("POSTGRES_HOST", "localhost")
+
+    admin_sync_dsn = _admin_sync_dsn()
+    clone_db_name = f"test_{uuid4().hex}"
+
+    admin_engine: SyncEngine = create_sync_engine(admin_sync_dsn, isolation_level="AUTOCOMMIT")
+    with admin_engine.connect() as conn:
+        conn.execute(text(f"CREATE DATABASE {clone_db_name} TEMPLATE {template_database}"))
+
+    try:
+        yield f"postgresql://{user}:{password}@{host}:{port}/{clone_db_name}"
+    finally:
+        with admin_engine.connect() as conn:
+            conn.execute(
+                text(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    "WHERE datname = :dbname AND pid <> pg_backend_pid()"
+                ),
+                {"dbname": clone_db_name},
+            )
+            conn.execute(text(f"DROP DATABASE IF EXISTS {clone_db_name}"))
+        admin_engine.dispose()
 
 
-@pytest.fixture(scope="session")
-def async_engine(apply_migrations: None) -> Iterator[AsyncEngine]:
-    engine = create_async_engine(_build_async_dsn(), pool_pre_ping=True)
+@pytest.fixture()
+def async_engine(test_database: str) -> Iterator[AsyncEngine]:
+    # Create async engine for the per-test database DSN
+    async_dsn = test_database.replace("postgresql://", "postgresql+asyncpg://", 1)
+    engine = create_async_engine(
+        async_dsn,
+        pool_pre_ping=True,
+        connect_args={"server_settings": {"timezone": "UTC"}},
+    )
     try:
         yield engine
     finally:
@@ -106,7 +146,7 @@ def async_engine(apply_migrations: None) -> Iterator[AsyncEngine]:
         asyncio.get_event_loop().run_until_complete(engine.dispose())
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def async_session_factory(async_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(bind=async_engine, autoflush=False, expire_on_commit=False)
 
