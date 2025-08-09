@@ -6,9 +6,7 @@ from .dto import BuyResponse, Candle
 
 class AbstractReadOnlyClient(ABC):
     @abstractmethod
-    async def get_candles(
-        self, symbol: str, interval: str = "15", limit: int = 200
-    ) -> list[Candle]:
+    async def get_candles(self, symbol: str, interval: str = "15", limit: int = 200) -> list[Candle]:
         pass
 
     @abstractmethod

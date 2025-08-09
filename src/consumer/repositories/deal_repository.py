@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from decimal import Decimal
 import datetime as _dt
+from decimal import Decimal
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.clients.dto import BuyResponse
 from src.core.dto import TradingSignal
@@ -49,11 +49,12 @@ class DealRepository:
 
         Optional filters by symbol and/or source can be applied.
         """
+
         # Normalize to naive UTC (column is TIMESTAMP WITHOUT TIME ZONE)
         def _to_naive_utc(value: _dt.datetime) -> _dt.datetime:
             if value.tzinfo is None:
                 return value
-            return value.astimezone(_dt.timezone.utc).replace(tzinfo=None)
+            return value.astimezone(_dt.UTC).replace(tzinfo=None)
 
         start_inclusive = _to_naive_utc(start_inclusive)
         end_exclusive = _to_naive_utc(end_exclusive)
@@ -71,3 +72,17 @@ class DealRepository:
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def has_open_buy_for_symbol_by_source(self, symbol: str, source: str) -> bool:
+        """Return True if there is a BUY deal for symbol without TP/SL execution."""
+        stmt = (
+            select(Deal.id)
+            .where(Deal.symbol == symbol)
+            .where(Deal.action == ActionEnum.BUY)
+            .where(Deal.is_take_profit_executed.is_(False))
+            .where(Deal.is_stop_loss_executed.is_(False))
+            .where(Deal.source == source)
+            .limit(1)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none() is not None

@@ -2,13 +2,13 @@ import datetime
 from uuid import UUID
 
 from sqlalchemy import Boolean, DateTime, Enum, Float, Numeric, String, func
-from sqlalchemy.types import TypeDecorator
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     mapped_column,
 )
+from sqlalchemy.types import TypeDecorator
 from uuid_extensions import uuid7
 
 from src.core.enums import ActionEnum
@@ -32,7 +32,7 @@ class UTCNaiveDateTime(TypeDecorator):
         if value is None:
             return None
         if value.tzinfo is not None:
-            return value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+            return value.astimezone(datetime.UTC).replace(tzinfo=None)
         return value
 
     def process_result_value(self, value: datetime.datetime | None, dialect):
@@ -49,9 +49,7 @@ class Deal(Base):
         unique=True,
         nullable=False,
     )
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        UTCNaiveDateTime(), server_default=func.now(), nullable=False
-    )
+    created_at: Mapped[datetime.datetime] = mapped_column(UTCNaiveDateTime(), server_default=func.now(), nullable=False)
 
     external_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
     symbol: Mapped[str] = mapped_column(String, nullable=False)

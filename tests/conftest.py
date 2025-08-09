@@ -49,6 +49,7 @@ def _build_async_dsn() -> str:
     host = os.environ.get("POSTGRES_HOST", "localhost")
     return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
 
+
 def _admin_sync_dsn() -> str:
     user = os.environ.get("POSTGRES_USER", "postgres")
     password = os.environ.get("POSTGRES_PASSWORD", "postgres")
@@ -77,9 +78,7 @@ def template_database() -> Iterator[str]:
         conn.execute(text(f"CREATE DATABASE {template_db_name}"))
 
     # Run migrations against the template DB
-    os.environ["SQLALCHEMY_DATABASE_URI"] = (
-        f"postgresql://{user}:{password}@{host}:{port}/{template_db_name}"
-    )
+    os.environ["SQLALCHEMY_DATABASE_URI"] = f"postgresql://{user}:{password}@{host}:{port}/{template_db_name}"
     alembic_cfg = Config(str(pathlib.Path(PROJECT_ROOT) / "alembic.ini"))
     command.upgrade(alembic_cfg, "head")
 
@@ -113,19 +112,10 @@ def test_database(template_database: str) -> Iterator[str]:
     admin_engine: SyncEngine = create_sync_engine(admin_sync_dsn, isolation_level="AUTOCOMMIT")
     with admin_engine.connect() as conn:
         conn.execute(text(f"CREATE DATABASE {clone_db_name} TEMPLATE {template_database}"))
-
-    try:
-        yield f"postgresql://{user}:{password}@{host}:{port}/{clone_db_name}"
-    finally:
-        with admin_engine.connect() as conn:
-            conn.execute(
-                text(
-                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
-                    "WHERE datname = :dbname AND pid <> pg_backend_pid()"
-                ),
-                {"dbname": clone_db_name},
-            )
-            conn.execute(text(f"DROP DATABASE IF EXISTS {clone_db_name}"))
+        try:
+            yield f"postgresql://{user}:{password}@{host}:{port}/{clone_db_name}"
+        finally:
+            conn.execute(text(f"DROP DATABASE {clone_db_name}"))
         admin_engine.dispose()
 
 

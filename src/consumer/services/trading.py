@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class TradingService:
-    def __init__(self, client: BybitAsyncClient, uow: UnitOfWork | None = None):
+    def __init__(self, client: BybitAsyncClient, uow: UnitOfWork):
         self.client = client
         self.uow = uow
 
@@ -18,6 +18,13 @@ class TradingService:
         if signal.action != ActionEnum.BUY:
             logger.info(f"Skipping non-buy signal {signal.symbol}")
             return None
+        # Guard: if we have UoW configured, avoid duplicate open deals for same symbol+source
+        async with self.uow() as uow_session:
+            has_open = await uow_session.deals.has_open_buy_for_symbol_by_source(signal.symbol, signal.source)
+            if has_open:
+                logger.info(f"Skipping buy for {signal.symbol}: open position already exists")
+                return None
+
         response = await self.client.buy(
             symbol=signal.symbol,
             usdt_amount=signal.amount,
@@ -25,8 +32,6 @@ class TradingService:
             stop_loss_percent=signal.stop_loss,
         )
         logger.info(f"Buy signal processed for {signal.symbol}; order id: {response.order_id}")
-        # persist deal if uow is configured
-        if self.uow is not None:
-            async with self.uow() as uow_session:
-                await uow_session.deals.create_from_buy(signal=signal, response=response)
+        await uow_session.deals.create_from_buy(signal=signal, response=response)
+        await uow_session.commit()
         return response

@@ -42,9 +42,7 @@ class TrandStrategy(Strategy):
         return np.convolve(values, np.ones(period), "valid") / period
 
     @classmethod
-    def _relative_strength_index(
-        cls, values: NDArray[np.float64], period: int = 14
-    ) -> NDArray[np.float64]:
+    def _relative_strength_index(cls, values: NDArray[np.float64], period: int = 14) -> NDArray[np.float64]:
         deltas = np.diff(values)
         ups = np.maximum(deltas, 0)
         downs = -np.minimum(deltas, 0)

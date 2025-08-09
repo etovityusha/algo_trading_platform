@@ -36,9 +36,7 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
         signature = hash.hexdigest()
         return signature
 
-    async def get_candles(
-        self, symbol: str, interval: str = "15", limit: int = 200
-    ) -> list[Candle]:
+    async def get_candles(self, symbol: str, interval: str = "15", limit: int = 200) -> list[Candle]:
         response = await self._request(
             method="GET",
             endpoint="/v5/market/kline",
@@ -72,9 +70,7 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
         result: dict = response["result"]["list"][0]
         return result
 
-    async def _request(
-        self, method: str, endpoint: str, params: dict | None = None
-    ) -> dict[str, Any]:
+    async def _request(self, method: str, endpoint: str, params: dict | None = None) -> dict[str, Any]:
         """Make authenticated request to Bybit API"""
         timestamp = int(time.time() * 1000)
         headers = {
@@ -92,9 +88,7 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             headers["X-BAPI-SIGN"] = self._generate_signature(params if params else "", timestamp)
         else:
             # For POST requests, sign the request body
-            headers["X-BAPI-SIGN"] = self._generate_signature(
-                json.dumps(params) if params else "", timestamp
-            )
+            headers["X-BAPI-SIGN"] = self._generate_signature(json.dumps(params) if params else "", timestamp)
 
         url = f"{self._base_url}{endpoint}"
         async with self._session.request(
@@ -153,9 +147,7 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             order_params["tpTriggerBy"] = "LastPrice"
             order_params["tpOrderType"] = "Market"
 
-        response = await self._request(
-            method="POST", endpoint="/v5/order/create", params=order_params
-        )
+        response = await self._request(method="POST", endpoint="/v5/order/create", params=order_params)
         order_id = response.get("result", {}).get("orderId")
         return BuyResponse(
             order_id=order_id,
@@ -193,14 +185,8 @@ class BybitStubWriteClient(BybitAsyncClient):
             symbol=symbol,
             qty=usdt_amount,
             price=price,
-            stop_loss_price=(
-                self._calculate_stop_loss_price(price, stop_loss_percent)
-                if stop_loss_percent
-                else None
-            ),
+            stop_loss_price=(self._calculate_stop_loss_price(price, stop_loss_percent) if stop_loss_percent else None),
             take_profit_price=(
-                self._calculate_take_profit_price(price, take_profit_percent)
-                if take_profit_percent
-                else None
+                self._calculate_take_profit_price(price, take_profit_percent) if take_profit_percent else None
             ),
         )

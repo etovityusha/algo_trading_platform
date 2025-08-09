@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import datetime as dt
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Dict, List, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.consumer.repositories.deal_repository import DealRepository
-from src.core.clients.interface import AbstractReadOnlyClient
 from src.core.clients.dto import Candle
+from src.core.clients.interface import AbstractReadOnlyClient
 from src.core.enums import ActionEnum
 from src.models import Deal
 
@@ -71,19 +71,15 @@ class StatisticsService:
 
         # Prefetch candles per symbol once to avoid redundant requests
         # We will use them twice: first with end_exclusive, then extend up to +7 days for unresolved deals
-        extended_end = min(
-            end_exclusive + dt.timedelta(days=7), dt.datetime.now(tz=dt.timezone.utc)
-        )
-        candles_by_symbol = await self._load_candles_for_deals(
-            deals=deals, end_exclusive=extended_end
-        )
+        extended_end = min(end_exclusive + dt.timedelta(days=7), dt.datetime.now(tz=dt.UTC))
+        candles_by_symbol = await self._load_candles_for_deals(deals=deals, end_exclusive=extended_end)
 
         return self._compute_stats(deals, candles_by_symbol, end_exclusive, extended_end)
 
     def _compute_stats(
         self,
         deals: Iterable[Deal],
-        candles_by_symbol: Dict[str, List[Candle]],
+        candles_by_symbol: dict[str, list[Candle]],
         end_exclusive: dt.datetime,
         extended_end: dt.datetime,
     ) -> DealStats:
@@ -175,24 +171,22 @@ class StatisticsService:
 
     async def _load_candles_for_deals(
         self, deals: Iterable[Deal], end_exclusive: dt.datetime
-    ) -> Dict[str, List[Candle]]:
+    ) -> dict[str, list[Candle]]:
         symbols = {d.symbol for d in deals}
         # Estimate required number of candles. Our API only supports "limit", so take a
         # reasonably large number to cover the period. 200 is the maximum per current client.
         # If period is larger, this will be a best-effort approximation.
-        candles_by_symbol: Dict[str, List[Candle]] = {}
+        candles_by_symbol: dict[str, list[Candle]] = {}
         for symbol in symbols:
-            candles = await self._client.get_candles(
-                symbol=symbol, interval=self._candles_interval, limit=200
-            )
+            candles = await self._client.get_candles(symbol=symbol, interval=self._candles_interval, limit=200)
             # Filter only candles up to end_exclusive to avoid using future bars
             end_ms = int(end_exclusive.timestamp() * 1000)
             candles_by_symbol[symbol] = [c for c in candles if c.timestamp <= end_ms]
         return candles_by_symbol
 
     def _infer_outcome(
-        self, deal: Deal, candles: List[Candle], *, end_limit: dt.datetime
-    ) -> Tuple[str | None, float | None]:
+        self, deal: Deal, candles: list[Candle], *, end_limit: dt.datetime
+    ) -> tuple[str | None, float | None]:
         """
         Infer how the deal closed using price action after the deal was created.
 
@@ -223,4 +217,3 @@ class StatisticsService:
             if take is not None and high_v >= take:
                 return "tp", float(take)
         return None, None
-

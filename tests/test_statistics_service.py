@@ -1,11 +1,10 @@
 import datetime as dt
 from decimal import Decimal
-from typing import Any
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from src.consumer.services.statistics import StatisticsService, DealStats
+from src.consumer.services.statistics import DealStats, StatisticsService
 from src.core.clients.dto import Candle
 from src.core.clients.interface import AbstractReadOnlyClient
 from src.core.enums import ActionEnum
@@ -40,7 +39,7 @@ async def test_statistics_service_closes_in_period_and_in_next_week(
     symbol = "BTCUSDT"
 
     # Build time window: end is yesterday, start is 2 days ago
-    now = dt.datetime.now(tz=dt.timezone.utc)
+    now = dt.datetime.now(tz=dt.UTC)
     start = now - dt.timedelta(days=2)
     end = now - dt.timedelta(days=1)
 
@@ -84,13 +83,41 @@ async def test_statistics_service_closes_in_period_and_in_next_week(
 
     # Build candles: include some before and after deals
     candles: list[Candle] = [
-        Candle(open=Decimal("100"), high=Decimal("101"), low=Decimal("99"), close=Decimal("100"), volume=Decimal("1"), timestamp=ms(start + dt.timedelta(hours=1))),
+        Candle(
+            open=Decimal("100"),
+            high=Decimal("101"),
+            low=Decimal("99"),
+            close=Decimal("100"),
+            volume=Decimal("1"),
+            timestamp=ms(start + dt.timedelta(hours=1)),
+        ),
         # After deal_tp, within period: reach TP=105
-        Candle(open=Decimal("100"), high=Decimal("106"), low=Decimal("99"), close=Decimal("105"), volume=Decimal("1"), timestamp=ms(start + dt.timedelta(hours=10))),
+        Candle(
+            open=Decimal("100"),
+            high=Decimal("106"),
+            low=Decimal("99"),
+            close=Decimal("105"),
+            volume=Decimal("1"),
+            timestamp=ms(start + dt.timedelta(hours=10)),
+        ),
         # After deal_sl, but still within [start, end): no hit
-        Candle(open=Decimal("103"), high=Decimal("104"), low=Decimal("98"), close=Decimal("100"), volume=Decimal("1"), timestamp=ms(start + dt.timedelta(hours=20))),
+        Candle(
+            open=Decimal("103"),
+            high=Decimal("104"),
+            low=Decimal("98"),
+            close=Decimal("100"),
+            volume=Decimal("1"),
+            timestamp=ms(start + dt.timedelta(hours=20)),
+        ),
         # After end, but within next week: hit SL=90 for deal_sl
-        Candle(open=Decimal("100"), high=Decimal("101"), low=Decimal("89"), close=Decimal("90"), volume=Decimal("1"), timestamp=ms(now - dt.timedelta(hours=12))),
+        Candle(
+            open=Decimal("100"),
+            high=Decimal("101"),
+            low=Decimal("89"),
+            close=Decimal("90"),
+            volume=Decimal("1"),
+            timestamp=ms(now - dt.timedelta(hours=12)),
+        ),
     ]
 
     client = StubReadOnlyClient({symbol: candles})
@@ -120,7 +147,7 @@ async def test_statistics_service_ignores_open_deal_without_levels(
     async_session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     symbol = "BTCUSDT"
-    now = dt.datetime.now(tz=dt.timezone.utc)
+    now = dt.datetime.now(tz=dt.UTC)
     start = now - dt.timedelta(days=2)
     end = now - dt.timedelta(days=1)
 
