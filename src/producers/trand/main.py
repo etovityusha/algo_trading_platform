@@ -2,7 +2,7 @@ import asyncio
 import logging
 from decimal import Decimal
 
-from faststream.rabbit import RabbitBroker, RabbitQueue
+from faststream.rabbit import RabbitBroker, RabbitQueue, QueueType
 
 from src.core.clients.bybit_async import BybitAsyncClient
 from src.core.dto import TradingSignal
@@ -26,7 +26,9 @@ async def main() -> None:
         is_demo=settings.bybit_ro.IS_DEMO,
     ) as client:
         strategy = TrandStrategy(client=client)
-        trading_queue = RabbitQueue("trading_signals", durable=True)
+        trading_queue = RabbitQueue(
+            "trading_signals", durable=True, queue_type=QueueType.CLASSIC
+        )
         try:
             while True:
                 for ticker in settings.TICKERS:
@@ -40,7 +42,9 @@ async def main() -> None:
                         action=prediction.action,
                         source="trand",
                     )
-                    await broker.publish(message.model_dump(), queue=trading_queue)
+                    await broker.publish(
+                        message.model_dump(mode="json"), queue=trading_queue
+                    )
                     logger.info(f"Sent trading signal for {ticker}")
                 await asyncio.sleep(600)
         finally:

@@ -28,5 +28,5 @@ class TrandSettings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
-        env_nested_delimiter="_",
+        env_nested_delimiter="__",
     )

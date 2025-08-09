@@ -24,5 +24,5 @@ class ConsumerSettings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         validate_default=True,
-        env_nested_delimiter="_",
+        env_nested_delimiter="__",
     )

@@ -1,3 +1,0 @@
-FROM producer-base:latest AS base
-
-CMD ["python", "-m", "src.producers.trand.main"]
