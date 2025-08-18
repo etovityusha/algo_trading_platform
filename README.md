@@ -34,6 +34,7 @@ uv pip compile requirements/consumer.in -o requirements/consumer.txt
 uv pip compile requirements/producer.in -o requirements/producer.txt
 uv pip compile requirements/migrator.in -o requirements/migrator.txt
 uv pip compile requirements/dev.in -o requirements/dev.txt
+uv pip compile requirements/scheduler.in -o requirements/scheduler.txt
 ```
 
 Compile all at once (bash):

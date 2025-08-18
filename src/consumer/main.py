@@ -26,6 +26,12 @@ queue = RabbitQueue(
     queue_type=QueueType.CLASSIC,
 )
 
+handle_positions_queue = RabbitQueue(
+    name="handle_open_positions",
+    durable=True,
+    queue_type=QueueType.CLASSIC,
+)
+
 
 @broker.subscriber(queue)
 async def process_trading_signal(signal: TradingSignal) -> None:
@@ -37,3 +43,8 @@ async def process_trading_signal(signal: TradingSignal) -> None:
         uow = UnitOfWork(session_factory=get_session_factory())
         trading_service = TradingService(client=client, uow=uow)
         await trading_service.process_signal(signal)
+
+
+@broker.subscriber(handle_positions_queue)
+async def handle_open_positions() -> None:
+    logger.info("handle_positions_queue task stub")

@@ -96,6 +96,20 @@ services:
     networks:
       - trading_network
 
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: scheduler-runtime
+    env_file: .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    command: ["taskiq", "scheduler", "src.scheduler:scheduler"]
+    restart: unless-stopped
+    networks:
+      - trading_network
+
 networks:
   trading_network:
     driver: bridge

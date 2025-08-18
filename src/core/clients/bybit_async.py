@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import hmac
 import json
@@ -36,16 +37,21 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
         signature = hash.hexdigest()
         return signature
 
-    async def get_candles(self, symbol: str, interval: str = "15", limit: int = 200) -> list[Candle]:
+    async def get_candles(
+        self, symbol: str, interval: str = "15", limit: int = 200, start: datetime.datetime | None = None
+    ) -> list[Candle]:
+        params = {
+            "category": "spot",
+            "symbol": symbol,
+            "interval": interval,
+            "limit": limit,
+        }
+        if start is not None:
+            params["start"] = int(start.timestamp() * 1000)
         response = await self._request(
             method="GET",
             endpoint="/v5/market/kline",
-            params={
-                "category": "spot",
-                "symbol": symbol,
-                "interval": interval,
-                "limit": limit,
-            },
+            params=params,
         )
         candles = [
             Candle(

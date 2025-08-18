@@ -74,3 +74,13 @@ COPY --from=producer-builder /app/src /app/src
 FROM producer-runtime AS trand-runtime
 CMD ["python", "-m", "src.producers.trand.main"]
 
+# ---------- Scheduler ----------
+FROM base-builder AS scheduler-builder
+COPY requirements/scheduler.txt requirements/scheduler.txt
+RUN uv pip install -r requirements/scheduler.txt
+COPY . .
+
+FROM base-runtime AS scheduler-runtime
+COPY --from=scheduler-builder /app/venv /app/venv
+COPY --from=scheduler-builder /app/src /app/src
+
