@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.consumer.services.trading import TradingService
-from src.consumer.uow import UnitOfWork
 from src.core.clients.bybit_async import BybitAsyncClient
 from src.core.dto import TradingSignal
 from src.core.enums import ActionEnum
@@ -17,7 +16,7 @@ from src.models import Deal
 async def test_skips_buy_when_open_deal_same_source(
     monkeypatch: pytest.MonkeyPatch,
     async_session_factory: async_sessionmaker[AsyncSession],
-    uow: UnitOfWork,
+    uow_session,
 ) -> None:
     # Arrange: pre-insert an open BUY deal for the same symbol and source
     async with async_session_factory() as s:
@@ -38,7 +37,7 @@ async def test_skips_buy_when_open_deal_same_source(
     # Client should not be called when open deal exists
     client = AsyncMock(spec=BybitAsyncClient)
 
-    service = TradingService(client=client, uow=uow)
+    service = TradingService(client=client, uow_session=uow_session)
     signal = TradingSignal(
         symbol="BTCUSDT",
         amount=Decimal("50"),

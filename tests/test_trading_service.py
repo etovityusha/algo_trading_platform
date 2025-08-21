@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.consumer.services.trading import TradingService
-from src.consumer.uow import UnitOfWork
+from src.consumer.uow import UoWSession
 from src.core.clients.bybit_async import BybitAsyncClient
 from src.core.clients.dto import BuyResponse
 from src.core.dto import TradingSignal
@@ -12,9 +12,9 @@ from src.core.enums import ActionEnum
 
 
 @pytest.mark.asyncio
-async def test_process_signal_non_buy_returns_none_and_no_buy_called(uow: UnitOfWork) -> None:
+async def test_process_signal_non_buy_returns_none_and_no_buy_called(uow_session: UoWSession) -> None:
     client = AsyncMock(spec=BybitAsyncClient)
-    service = TradingService(client=client, uow=uow)
+    service = TradingService(client=client, uow_session=uow_session)
 
     signal = TradingSignal(
         symbol="BTCUSDT",
@@ -32,7 +32,7 @@ async def test_process_signal_non_buy_returns_none_and_no_buy_called(uow: UnitOf
 
 
 @pytest.mark.asyncio
-async def test_process_signal_buy_calls_client_and_returns_response(uow: UnitOfWork) -> None:
+async def test_process_signal_buy_calls_client_and_returns_response(uow_session: UoWSession) -> None:
     client = AsyncMock(spec=BybitAsyncClient)
     expected_response = BuyResponse(
         order_id="order-1",
@@ -44,7 +44,7 @@ async def test_process_signal_buy_calls_client_and_returns_response(uow: UnitOfW
     )
     client.buy.return_value = expected_response
 
-    service = TradingService(client=client, uow=uow)
+    service = TradingService(client=client, uow_session=uow_session)
 
     signal = TradingSignal(
         symbol="BTCUSDT",

@@ -148,6 +148,18 @@ async def uow(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncI
     yield UnitOfWork(session_factory=async_session_factory)
 
 
+@pytest.fixture()
+async def uow_session(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncIterator[object]:
+    from src.consumer.uow import UoWSession
+
+    session: AsyncSession = async_session_factory()
+    try:
+        async with session.begin():
+            yield UoWSession(session)
+    finally:
+        await session.close()
+
+
 @pytest.fixture(autouse=False)
 async def clean_db(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncIterator[None]:
     from src.models import Deal

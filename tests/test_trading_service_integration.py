@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.consumer.services.trading import TradingService
-from src.consumer.uow import UnitOfWork
+from src.consumer.uow import UoWSession
 from src.core.clients.bybit_async import BybitStubWriteClient
 from src.core.dto import TradingSignal
 from src.core.enums import ActionEnum
@@ -16,7 +16,7 @@ from src.models import Deal
 async def test_trading_service_persists_deal(
     monkeypatch: pytest.MonkeyPatch,
     async_session_factory: async_sessionmaker[AsyncSession],
-    uow: UnitOfWork,
+    uow_session: UoWSession,
 ) -> None:
     async def fake_get_ticker_price(symbol: str) -> Decimal:
         return Decimal("100")
@@ -24,7 +24,7 @@ async def test_trading_service_persists_deal(
     client = BybitStubWriteClient(api_key="k", api_secret="s", is_demo=True)
     monkeypatch.setattr(client, "get_ticker_price", fake_get_ticker_price)
 
-    service = TradingService(client=client, uow=uow)
+    service = TradingService(client=client, uow_session=uow_session)
 
     signal = TradingSignal(
         symbol="BTCUSDT",

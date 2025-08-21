@@ -5,7 +5,8 @@ import pytest
 from src.core.clients.bybit_async import BybitAsyncClient
 
 
-def test_generate_signature_is_deterministic(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.asyncio
+async def test_generate_signature_is_deterministic(monkeypatch: pytest.MonkeyPatch) -> None:
     client = BybitAsyncClient(api_key="k", api_secret="s", is_demo=True)
 
     # Fixed timestamp for reproducibility
@@ -17,7 +18,8 @@ def test_generate_signature_is_deterministic(monkeypatch: pytest.MonkeyPatch) ->
     assert isinstance(sig1, str) and len(sig1) == 64
 
 
-def test_calculate_stop_and_take_profit_prices() -> None:
+@pytest.mark.asyncio
+async def test_calculate_stop_and_take_profit_prices() -> None:
     client = BybitAsyncClient(api_key="k", api_secret="s", is_demo=True)
     price = Decimal("100")
 
@@ -118,7 +120,6 @@ async def test_get_ticker_price_parses_last_price(monkeypatch: pytest.MonkeyPatc
 
 @pytest.mark.asyncio
 async def test_stub_write_client_buy(monkeypatch: pytest.MonkeyPatch) -> None:
-
     async def fake_get_ticker_price(symbol: str) -> Decimal:
         return Decimal("100")
 
