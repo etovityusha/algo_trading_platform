@@ -10,7 +10,8 @@ from urllib.parse import urlencode
 import aiohttp
 from uuid_extensions import uuid7
 
-from src.core.clients.dto import BuyResponse, Candle
+from core.enums import ExchangeOrderStatus
+from src.core.clients.dto import BuyResponse, Candle, OrderStatus
 from src.core.clients.interface import AbstractReadOnlyClient, AbstractWriteClient
 
 
@@ -82,10 +83,9 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
 
         # For GET requests, add params to URL
         if method == "GET":
-            if params:
-                query_string = urlencode(params)
-                endpoint = f"{endpoint}?{query_string}"
-            headers["X-BAPI-SIGN"] = self._generate_signature(params if params else "", timestamp)
+            query_string = urlencode(params or {})
+            endpoint = f"{endpoint}?{query_string}" if query_string else endpoint
+            headers["X-BAPI-SIGN"] = self._generate_signature(query_string, timestamp)
         else:
             # For POST requests, sign the request body
             headers["X-BAPI-SIGN"] = self._generate_signature(json.dumps(params) if params else "", timestamp)
@@ -168,6 +168,60 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             self._lot_precision["USDT"], rounding=ROUND_DOWN
         )
 
+    async def get_order_status(self, order_id: str, symbol: str) -> OrderStatus | None:
+        """Get order status by order ID"""
+        # First try to get from open orders
+        response = await self._request(
+            method="GET",
+            endpoint="/v5/order/realtime",
+            params={"category": "spot"},
+        )
+        orders = response.get("result", {}).get("list", [])
+        if orders:
+            order_data = orders[0]
+            return OrderStatus(
+                order_id=order_data.get("orderId", ""),
+                order_link_id=order_data.get("orderLinkId", ""),
+                symbol=order_data.get("symbol", ""),
+                order_status=order_data.get("orderStatus"),
+                side=order_data.get("side", ""),
+                order_type=order_data.get("orderType", ""),
+                qty=order_data.get("qty", ""),
+                price=order_data.get("price", ""),
+                avg_price=order_data.get("avgPrice"),
+                cum_exec_qty=order_data.get("cumExecQty", ""),
+                stop_order_type=order_data.get("stopOrderType", ""),
+                created_time=order_data.get("createdTime", ""),
+                updated_time=order_data.get("updatedTime", ""),
+            )
+
+        # If not found in open orders, check order history
+        response = await self._request(
+            method="GET",
+            endpoint="/v5/order/history",
+            params={"category": "spot", "orderId": order_id, "symbol": symbol},
+        )
+        orders = response.get("result", {}).get("list", [])
+        if orders:
+            order_data = orders[0]
+            return OrderStatus(
+                order_id=order_data.get("orderId", ""),
+                order_link_id=order_data.get("orderLinkId", ""),
+                symbol=order_data.get("symbol", ""),
+                order_status=order_data.get("orderStatus"),
+                side=order_data.get("side", ""),
+                order_type=order_data.get("orderType", ""),
+                qty=order_data.get("qty", ""),
+                price=order_data.get("price", ""),
+                avg_price=order_data.get("avgPrice"),
+                cum_exec_qty=order_data.get("cumExecQty", ""),
+                stop_order_type=order_data.get("stopOrderType", ""),
+                created_time=order_data.get("createdTime", ""),
+                updated_time=order_data.get("updatedTime", ""),
+            )
+
+        return None
+
     async def sell(
         self,
         symbol: str,
@@ -212,9 +266,32 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             take_profit_price=None,
         )
 
+    async def close(self) -> None:
+        """Close the aiohttp session"""
+        if self._session and not self._session.closed:
+            await self._session.close()
+
 
 class BybitStubWriteClient(BybitAsyncClient):
     """Same as BybitAsyncClient, but overrides write methods to return fake responses"""
+
+    async def get_order_status(self, order_id: str, symbol: str) -> OrderStatus | None:
+        """Stub method - returns fake order status for testing"""
+        return OrderStatus(
+            order_id=order_id,
+            order_link_id="",
+            symbol=symbol,
+            order_status=ExchangeOrderStatus("Filled"),
+            side="Buy",
+            order_type="Limit",
+            qty="1.0",
+            price="50000.0",
+            avg_price="50000.0",
+            cum_exec_qty="1.0",
+            stop_order_type="",
+            created_time="1640000000000",
+            updated_time="1640000000000",
+        )
 
     async def buy(
         self,

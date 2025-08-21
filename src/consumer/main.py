@@ -7,8 +7,8 @@ from faststream import FastStream
 from faststream.rabbit import QueueType, RabbitBroker, RabbitQueue
 
 from src.consumer.config.settings import ConsumerSettings
+from src.consumer.services.position_manager import PositionManagerService
 from src.consumer.services.trading import TradingService
-from src.core.clients.interface import AbstractWriteClient
 from src.core.dto import TradingSignal
 from src.di.config import ConsumerConfigProvider
 from src.di.database import DatabaseProvider
@@ -61,5 +61,7 @@ async def process_trading_signal(
         queue_type=QueueType.CLASSIC,
     )
 )
-async def handle_open_positions(client: FromDishka[AbstractWriteClient]) -> None:
-    logger.info(f"handle_positions_queue task stub, {client=}")
+async def handle_open_positions(
+    position_manager: FromDishka[PositionManagerService],
+) -> None:
+    await position_manager.handle_open_positions()

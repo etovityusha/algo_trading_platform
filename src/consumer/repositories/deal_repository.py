@@ -152,3 +152,34 @@ class DealRepository:
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
+
+    async def get_all_open_positions(self) -> list[Deal]:
+        """Get all open BUY positions that haven't been closed by TP/SL or manually."""
+        stmt = (
+            select(Deal)
+            .where(Deal.action == ActionEnum.BUY)
+            .where(Deal.is_take_profit_executed.is_(False))
+            .where(Deal.is_stop_loss_executed.is_(False))
+            .where(Deal.is_manually_closed.is_(False))
+            .order_by(Deal.created_at.asc())
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def mark_take_profit_executed(self, deal_id: str) -> None:
+        """Mark a deal as take profit executed."""
+        stmt = update(Deal).where(Deal.id == deal_id).values(is_take_profit_executed=True)
+        await self.session.execute(stmt)
+        await self.session.flush()
+
+    async def mark_stop_loss_executed(self, deal_id: str) -> None:
+        """Mark a deal as stop loss executed."""
+        stmt = update(Deal).where(Deal.id == deal_id).values(is_stop_loss_executed=True)
+        await self.session.execute(stmt)
+        await self.session.flush()
+
+    async def mark_manually_closed(self, deal_id: str) -> None:
+        """Mark a deal as manually closed."""
+        stmt = update(Deal).where(Deal.id == deal_id).values(is_manually_closed=True)
+        await self.session.execute(stmt)
+        await self.session.flush()

@@ -1,3 +1,4 @@
+import datetime
 import datetime as dt
 from decimal import Decimal
 
@@ -5,7 +6,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.consumer.services.statistics import DealStats, StatisticsService
-from src.core.clients.dto import Candle
+from src.core.clients.dto import Candle, OrderStatus
 from src.core.clients.interface import AbstractReadOnlyClient
 from src.core.enums import ActionEnum
 from src.models import Deal
@@ -15,7 +16,9 @@ class StubReadOnlyClient(AbstractReadOnlyClient):
     def __init__(self, candles_by_symbol: dict[str, list[Candle]]):
         self._candles_by_symbol = candles_by_symbol
 
-    async def get_candles(self, symbol: str, interval: str = "15", limit: int = 200) -> list[Candle]:
+    async def get_candles(
+        self, symbol: str, interval: str = "15", limit: int = 200, start: datetime.datetime | None = None
+    ) -> list[Candle]:
         # Return at most last `limit` candles
         candles = self._candles_by_symbol.get(symbol, [])
         return candles[-limit:]
@@ -26,6 +29,9 @@ class StubReadOnlyClient(AbstractReadOnlyClient):
     async def get_ticker_price(self, symbol: str) -> Decimal:
         candles = self._candles_by_symbol.get(symbol, [])
         return Decimal(str(candles[-1].close if candles else 0))
+
+    async def get_order_status(self, order_id: str, symbol: str) -> OrderStatus | None:
+        return None
 
 
 def ms(ts: dt.datetime) -> int:
