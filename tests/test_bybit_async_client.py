@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from src.core.clients.bybit_async import BybitAsyncClient
+from src.core.clients.bybit_async import BybitAsyncClient, BybitStubWriteClient
 
 
 @pytest.mark.asyncio
@@ -122,8 +122,6 @@ async def test_get_ticker_price_parses_last_price(monkeypatch: pytest.MonkeyPatc
 async def test_stub_write_client_buy(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_get_ticker_price(symbol: str) -> Decimal:
         return Decimal("100")
-
-    from src.core.clients.bybit_async import BybitStubWriteClient
 
     stub = BybitStubWriteClient(api_key="k", api_secret="s", is_demo=True)
     monkeypatch.setattr(stub, "get_ticker_price", fake_get_ticker_price)

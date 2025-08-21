@@ -168,6 +168,50 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
             self._lot_precision["USDT"], rounding=ROUND_DOWN
         )
 
+    async def sell(
+        self,
+        symbol: str,
+        qty: Decimal | None = None,
+        usdt_amount: Decimal | None = None,
+    ) -> BuyResponse:
+        """Sell crypto position. Either specify qty (amount of crypto) or usdt_amount (USD value to sell)."""
+        if not qty and not usdt_amount:
+            raise ValueError("Either qty or usdt_amount must be specified")
+
+        if qty is None:
+            raise ValueError("qty cannot be None after calculation")
+
+        price: Decimal = await self.get_ticker_price(symbol)
+
+        # Calculate quantity if usdt_amount is provided
+        if usdt_amount and not qty:
+            precision = self._lot_precision.get(symbol)
+            if not precision:
+                instrument_info = await self.get_instrument_info(symbol)
+                precision = Decimal(instrument_info["lotSizeFilter"]["basePrecision"])
+                self._lot_precision[symbol] = precision
+            qty = (usdt_amount / price).quantize(precision, rounding=ROUND_DOWN)
+
+        order_params = {
+            "category": "spot",
+            "symbol": symbol,
+            "side": "Sell",
+            "orderType": "Market",  # Use market order for immediate execution
+            "qty": str(qty),
+            "timeInForce": "IOC",  # Immediate or Cancel
+        }
+
+        response = await self._request(method="POST", endpoint="/v5/order/create", params=order_params)
+        order_id = response.get("result", {}).get("orderId")
+        return BuyResponse(
+            order_id=order_id,
+            symbol=symbol,
+            qty=qty if qty is not None else Decimal("0"),
+            price=price,
+            stop_loss_price=None,
+            take_profit_price=None,
+        )
+
 
 class BybitStubWriteClient(BybitAsyncClient):
     """Same as BybitAsyncClient, but overrides write methods to return fake responses"""
@@ -181,7 +225,7 @@ class BybitStubWriteClient(BybitAsyncClient):
     ) -> BuyResponse:
         price = await self.get_ticker_price(symbol)
         return BuyResponse(
-            order_id=uuid7(as_type="str"),
+            order_id=str(uuid7()),
             symbol=symbol,
             qty=usdt_amount,
             price=price,
@@ -189,4 +233,27 @@ class BybitStubWriteClient(BybitAsyncClient):
             take_profit_price=(
                 self._calculate_take_profit_price(price, take_profit_percent) if take_profit_percent else None
             ),
+        )
+
+    async def sell(
+        self,
+        symbol: str,
+        qty: Decimal | None = None,
+        usdt_amount: Decimal | None = None,
+    ) -> BuyResponse:
+        """Stub sell method - returns fake response for testing"""
+        price = await self.get_ticker_price(symbol)
+
+        if usdt_amount and not qty:
+            qty = usdt_amount / price
+        elif not qty:
+            qty = Decimal("1.0")  # Default value for stub
+
+        return BuyResponse(
+            order_id=str(uuid7()),
+            symbol=symbol,
+            qty=qty,
+            price=price,
+            stop_loss_price=None,
+            take_profit_price=None,
         )

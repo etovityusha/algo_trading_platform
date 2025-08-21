@@ -22,7 +22,6 @@ class AbstractReadOnlyClient(ABC):
 
 
 class AbstractWriteClient(ABC):
-
     @abstractmethod
     async def buy(
         self,
@@ -31,4 +30,14 @@ class AbstractWriteClient(ABC):
         stop_loss_percent: float | None = None,
         take_profit_percent: float | None = None,
     ) -> BuyResponse:
+        pass
+
+    @abstractmethod
+    async def sell(
+        self,
+        symbol: str,
+        qty: Decimal | None = None,
+        usdt_amount: Decimal | None = None,
+    ) -> BuyResponse:
+        """Sell crypto position. Either specify qty (amount of crypto) or usdt_amount (USD value to sell)."""
         pass

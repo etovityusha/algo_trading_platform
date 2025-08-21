@@ -60,6 +60,7 @@ class Deal(Base):
     stop_loss_price: Mapped[float | None] = mapped_column(Float, nullable=True)
     is_take_profit_executed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_stop_loss_executed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_manually_closed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     action: Mapped[ActionEnum] = mapped_column(Enum(ActionEnum), nullable=False)
     source: Mapped[str] = mapped_column(String, nullable=False)

@@ -51,8 +51,8 @@ class ProducerService:
         message = TradingSignal(
             symbol=ticker,
             amount=Decimal("100"),
-            take_profit=2,
-            stop_loss=1,
+            take_profit=prediction.take_profit,
+            stop_loss=prediction.stop_loss,
             action=prediction.action,
             source="trand",
         )

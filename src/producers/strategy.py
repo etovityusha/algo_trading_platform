@@ -8,6 +8,8 @@ from src.core.enums import ActionEnum
 class Prediction:
     symbol: str
     action: ActionEnum
+    stop_loss: float | None = None  # в процентах от текущей цены
+    take_profit: float | None = None  # в процентах от текущей цены
 
 
 class Strategy(abc.ABC):

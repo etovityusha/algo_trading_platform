@@ -1,3 +1,4 @@
+import asyncio
 import os
 import pathlib
 import sys
@@ -16,6 +17,9 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+
+from src.consumer.uow import UnitOfWork, UoWSession
+from src.models import Deal
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
@@ -131,8 +135,6 @@ def async_engine(test_database: str) -> Iterator[AsyncEngine]:
     try:
         yield engine
     finally:
-        import asyncio
-
         asyncio.get_event_loop().run_until_complete(engine.dispose())
 
 
@@ -143,15 +145,11 @@ def async_session_factory(async_engine: AsyncEngine) -> async_sessionmaker[Async
 
 @pytest.fixture()
 async def uow(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncIterator[object]:
-    from src.consumer.uow import UnitOfWork
-
     yield UnitOfWork(session_factory=async_session_factory)
 
 
 @pytest.fixture()
 async def uow_session(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncIterator[object]:
-    from src.consumer.uow import UoWSession
-
     session: AsyncSession = async_session_factory()
     try:
         async with session.begin():
@@ -162,8 +160,6 @@ async def uow_session(async_session_factory: async_sessionmaker[AsyncSession]) -
 
 @pytest.fixture(autouse=False)
 async def clean_db(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncIterator[None]:
-    from src.models import Deal
-
     async with async_session_factory() as s:
         async with s.begin():
             await s.execute(delete(Deal))
