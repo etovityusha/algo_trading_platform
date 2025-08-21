@@ -1,19 +1,13 @@
 import logging
 
 from faststream.rabbit import RabbitBroker
-from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from taskiq.schedule_sources import LabelScheduleSource
 from taskiq_faststream import BrokerWrapper, StreamScheduler
 
+from configs import RabbitSettings
+
 logger = logging.getLogger(__name__)
-
-
-class RabbitSettings(BaseModel):
-    USER: str
-    PASS: str
-    HOST: str
-    PORT: int = 5672
 
 
 class SchedulerConfig(BaseSettings):
@@ -27,12 +21,8 @@ class SchedulerConfig(BaseSettings):
         env_nested_delimiter="__",
     )
 
-    @property
-    def rabbitmq_url(self) -> str:
-        return f"amqp://{self.rabbit.USER}:{self.rabbit.PASS}@{self.rabbit.HOST}:{self.rabbit.PORT}/"
 
-
-broker = RabbitBroker(url=SchedulerConfig().rabbitmq_url, logger=logger)
+broker = RabbitBroker(url=SchedulerConfig().rabbit.dsn, logger=logger)
 taskiq_broker = BrokerWrapper(broker)
 taskiq_broker.task(
     queue="handle_open_positions",

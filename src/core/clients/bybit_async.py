@@ -22,13 +22,7 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
         self._lot_precision = {
             "USDT": Decimal("0.01"),
         }
-
-    async def __aenter__(self) -> "BybitAsyncClient":
         self._session = aiohttp.ClientSession()
-        return self
-
-    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        await self._session.close()
 
     def _generate_signature(self, params: dict[str, Any] | str, timestamp: int) -> str:
         """Generate signature for authentication"""

@@ -1,23 +1,11 @@
-from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
-class RabbitSettings(BaseModel):
-    USER: str
-    PASS: str
-    HOST: str
-    PORT: int = 5672
-
-
-class BybitReadOnlySettings(BaseModel):
-    API_KEY: str
-    API_SECRET: str
-    IS_DEMO: bool = True
+from configs import BybitSettings, RabbitSettings
 
 
 class TrandSettings(BaseSettings):
     rabbit: RabbitSettings
-    bybit_ro: BybitReadOnlySettings
+    bybit_ro: BybitSettings
 
     TICKERS: list[str] = [
         "BTCUSDT",

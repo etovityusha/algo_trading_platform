@@ -1,50 +1,65 @@
 import logging
 
+from dishka.async_container import make_async_container
+from dishka.entities.depends_marker import FromDishka
+from dishka.integrations import faststream as faststream_integration
 from faststream import FastStream
 from faststream.rabbit import QueueType, RabbitBroker, RabbitQueue
 
 from src.consumer.config.settings import ConsumerSettings
-from src.consumer.db import get_session_factory
 from src.consumer.services.trading import TradingService
-from src.consumer.uow import UnitOfWork
-from src.core.clients.bybit_async import BybitAsyncClient
+from src.core.clients.interface import AbstractWriteClient
 from src.core.dto import TradingSignal
+from src.di.config import ConsumerConfigProvider
+from src.di.database import DatabaseProvider
+from src.di.exchange import ExchangeProvider
+from src.di.service import ServiceProvider
 from src.logger import init_logging
 
 logger = logging.getLogger(__name__)
 
-init_logging()
-settings = ConsumerSettings()
-broker = RabbitBroker(
-    f"amqp://{settings.rabbit.USER}:{settings.rabbit.PASS}@{settings.rabbit.HOST}:{settings.rabbit.PORT}"
+
+def _configure_app() -> tuple[FastStream, RabbitBroker]:
+    init_logging()
+
+    settings = ConsumerSettings()
+    container = make_async_container(
+        ConsumerConfigProvider(),
+        DatabaseProvider(),
+        ExchangeProvider(),
+        ServiceProvider(),
+        context={ConsumerSettings: settings},
+    )
+    broker = RabbitBroker(settings.rabbit.dsn)
+    app = FastStream(logger=logger, broker=broker)
+    faststream_integration.setup_dishka(container=container, app=app, auto_inject=True)
+    return app, broker
+
+
+app, broker = _configure_app()
+
+
+@broker.subscriber(
+    RabbitQueue(
+        name="trading_signals",
+        durable=True,
+        queue_type=QueueType.CLASSIC,
+    )
 )
-app = FastStream(logger=logger, broker=broker)
+async def process_trading_signal(
+    signal: TradingSignal,
+    trading_service: FromDishka[TradingService],
+) -> None:
+    logger.info(f"Processing trading signal: {signal.symbol} {signal.action}")
+    await trading_service.process_signal(signal)
 
-queue = RabbitQueue(
-    name="trading_signals",
-    durable=True,
-    queue_type=QueueType.CLASSIC,
+
+@broker.subscriber(
+    RabbitQueue(
+        name="handle_open_positions",
+        durable=True,
+        queue_type=QueueType.CLASSIC,
+    )
 )
-
-handle_positions_queue = RabbitQueue(
-    name="handle_open_positions",
-    durable=True,
-    queue_type=QueueType.CLASSIC,
-)
-
-
-@broker.subscriber(queue)
-async def process_trading_signal(signal: TradingSignal) -> None:
-    async with BybitAsyncClient(
-        api_key=settings.bybit.API_KEY,
-        api_secret=settings.bybit.API_SECRET,
-        is_demo=settings.bybit.IS_DEMO,
-    ) as client:
-        uow = UnitOfWork(session_factory=get_session_factory())
-        trading_service = TradingService(client=client, uow=uow)
-        await trading_service.process_signal(signal)
-
-
-@broker.subscriber(handle_positions_queue)
-async def handle_open_positions() -> None:
-    logger.info("handle_positions_queue task stub")
+async def handle_open_positions(client: FromDishka[AbstractWriteClient]) -> None:
+    logger.info(f"handle_positions_queue task stub, {client=}")
