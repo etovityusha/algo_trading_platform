@@ -40,7 +40,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --extra dev
+          uv sync --extra dev --extra consumer --extra producer --extra migrator --extra scheduler
 
       - name: Run Black formatter check
         run: |
