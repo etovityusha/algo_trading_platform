@@ -89,24 +89,24 @@ class DealRepository:
         return result.scalar_one_or_none() is not None
 
     async def close_position(self, signal: TradingSignal, response: BuyResponse) -> Deal:
-        """Create a SELL deal that closes an open position and mark the original position as closed."""
-        # First, mark the original BUY position as manually closed
-        await self._mark_position_as_closed(signal.symbol, signal.source)
+        """Update existing BUY position with sell_price and mark as closed."""
+        # Get the open position first
+        open_position = await self.get_open_position(signal.symbol, signal.source)
+        if not open_position:
+            raise ValueError(f"No open position found for {signal.symbol} from {signal.source}")
 
-        # Create SELL deal record
-        deal = Deal(
-            external_id=response.order_id,
-            symbol=response.symbol,
-            qty=response.qty,
-            price=self._decimal_to_float(response.price),
-            take_profit_price=None,  # SELL deals don't have TP/SL
-            stop_loss_price=None,
-            action=ActionEnum.SELL,
-            source=signal.source,
+        # Update the existing BUY position with sell price and mark as closed
+        stmt = (
+            update(Deal)
+            .where(Deal.id == open_position.id)
+            .values(sell_price=self._decimal_to_float(response.price), is_manually_closed=True)
         )
-        self.session.add(deal)
+        await self.session.execute(stmt)
         await self.session.flush()
-        return deal
+
+        # Refresh the object to get updated data
+        await self.session.refresh(open_position)
+        return open_position
 
     async def get_open_position(self, symbol: str, source: str) -> Deal | None:
         """Get open BUY position for symbol and source."""
@@ -146,7 +146,9 @@ class DealRepository:
             select(Deal.id)
             .where(Deal.symbol == symbol)
             .where(Deal.source == source)
-            .where(Deal.action == ActionEnum.SELL)
+            .where(Deal.action == ActionEnum.BUY)
+            .where(Deal.is_manually_closed.is_(True))
+            .where(Deal.sell_price.is_not(None))
             .where(Deal.created_at >= cutoff_time)
             .limit(1)
         )
