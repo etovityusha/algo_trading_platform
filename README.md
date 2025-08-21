@@ -8,6 +8,7 @@ The system consists of the following main components:
 
 - **Producers**: Microservices that generate trading signals based on different strategies
   - `trand`: A trend-following strategy implementation
+  - `momentum`: An aggressive momentum-based strategy using multiple technical indicators
 - **Consumer**: Service that processes trading signals and executes trades on Bybit
 - **RabbitMQ**: Message broker for communication between producers and consumer
 - **PostgreSQL**: Database for storing trade history and system state

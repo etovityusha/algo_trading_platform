@@ -79,6 +79,10 @@ COPY --from=producer-builder /app/src /app/src
 FROM producer-runtime AS trand-runtime
 CMD ["python", "-m", "src.producers.trand.main"]
 
+# ---------- Momentum producer ----------
+FROM producer-runtime AS momentum-runtime
+CMD ["python", "-m", "src.producers.momentum.main"]
+
 # ---------- Scheduler ----------
 FROM base-builder AS scheduler-builder
 # Install scheduler-specific dependencies first (cached layer)

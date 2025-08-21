@@ -2,7 +2,7 @@ import datetime
 from abc import ABC, abstractmethod
 from decimal import Decimal
 
-from .dto import BuyResponse, Candle
+from .dto import BuyResponse, Candle, OrderStatus
 
 
 class AbstractReadOnlyClient(ABC):
@@ -18,6 +18,10 @@ class AbstractReadOnlyClient(ABC):
 
     @abstractmethod
     async def get_ticker_price(self, symbol: str) -> Decimal:
+        pass
+
+    @abstractmethod
+    async def get_order_status(self, order_id: str, symbol: str) -> OrderStatus | None:
         pass
 
 
