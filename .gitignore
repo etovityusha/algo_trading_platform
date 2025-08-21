@@ -138,3 +138,4 @@ postgres_data/
 
 # Project specific (add your custom rules here)
 rabbitmq_data/
+.zed/
