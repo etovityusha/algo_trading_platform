@@ -22,25 +22,32 @@ To add a new trading strategy:
 3. Add configuration to `docker-compose.yaml`
 4. Create a Dockerfile in `docker/producers/`
 
-## ⚙️ Updating dependencies (requirements) with uv
+## 📦 Dependency Management
 
-When any `requirements/*.in` files change, recompile the corresponding `requirements/*.txt` files using uv.
+This project uses `pyproject.toml` for dependency management instead of `requirements/*.in` files.
 
-Compile each .in to its .txt:
+### Available dependency groups:
 
-```bash
-uv pip compile requirements/core.in -o requirements/core.txt
-uv pip compile requirements/consumer.in -o requirements/consumer.txt
-uv pip compile requirements/producer.in -o requirements/producer.txt
-uv pip compile requirements/migrator.in -o requirements/migrator.txt
-uv pip compile requirements/dev.in -o requirements/dev.txt
-uv pip compile requirements/scheduler.in -o requirements/scheduler.txt
-```
+- **core** (base dependencies): Installed by default with `pip install -e .`
+- **consumer**: Database and messaging dependencies for the consumer service
+- **producer**: Data analysis dependencies for producer services
+- **migrator**: Database migration dependencies
+- **scheduler**: Task scheduling dependencies
+- **dev**: All development tools (testing, linting, formatting)
 
-Compile all at once (bash):
+### Quick Start
 
 ```bash
-for f in requirements/*.in; do \
-  uv pip compile "$f" -o "requirements/$(basename "$f" .in).txt"; \
-done
+# Install base dependencies
+uv pip install -e .
+
+# Install for development (includes all tools)
+uv pip install -e ".[dev]"
+
+# Install for specific service
+uv pip install -e ".[consumer]"
+uv pip install -e ".[producer]"
+
+# Install multiple groups
+uv pip install -e ".[consumer,producer]"
 ```

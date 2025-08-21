@@ -12,14 +12,21 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "${POSTGRES__PORT}:${POSTGRES__PORT}"
-    command: [
-      "postgres",
-      "-c", "port=${POSTGRES__PORT}"
-    ]
+    command: ["postgres", "-c", "port=${POSTGRES__PORT}"]
     networks:
       - trading_network
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${POSTGRES__USER}", "-d", "${POSTGRES__DB}", "-p", "${POSTGRES__PORT}" ]
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-U",
+          "${POSTGRES__USER}",
+          "-d",
+          "${POSTGRES__DB}",
+          "-p",
+          "${POSTGRES__PORT}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -28,7 +35,6 @@ services:
         limits:
           memory: 512M
           cpus: "1.0"
-
 
   rabbitmq:
     image: rabbitmq:4.1.0-alpine
@@ -55,7 +61,7 @@ services:
   migrator:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
       target: migrator-runtime
     env_file: .env
     depends_on:
@@ -64,12 +70,10 @@ services:
     networks:
       - trading_network
 
-  
-
   consumer:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
       target: consumer-runtime
     env_file: .env
     depends_on:
@@ -86,7 +90,7 @@ services:
   trand:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
       target: trand-runtime
     env_file: .env
     depends_on:
@@ -99,7 +103,7 @@ services:
   scheduler:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
       target: scheduler-runtime
     env_file: .env
     depends_on:

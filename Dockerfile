@@ -15,9 +15,9 @@ ENV PATH="/app/venv/bin:$PATH"
 
 RUN pip install --no-cache-dir uv
 
-# Core deps shared across all services
-COPY requirements/core.txt requirements/core.txt
-RUN uv pip install -r requirements/core.txt
+COPY pyproject.toml README.md ./
+COPY src/ src/
+RUN uv pip install -e .
 
 # ---------- Base runtime ----------
 FROM python:3.12-slim AS base-runtime
@@ -32,8 +32,7 @@ ENV PYTHONPATH=/app
 
 # ---------- Consumer ----------
 FROM base-builder AS consumer-builder
-COPY requirements/consumer.txt requirements/consumer.txt
-RUN uv pip install -r requirements/consumer.txt
+RUN uv pip install -e .[consumer]
 COPY . .
 
 FROM base-runtime AS consumer-runtime
@@ -45,8 +44,7 @@ CMD ["faststream", "run", "src.consumer.main:app"]
 
 # ---------- Migrator ----------
 FROM base-builder AS migrator-builder
-COPY requirements/migrator.txt requirements/migrator.txt
-RUN uv pip install -r requirements/migrator.txt
+RUN uv pip install -e .[migrator]
 COPY . .
 
 FROM base-runtime AS migrator-runtime
@@ -58,8 +56,7 @@ CMD ["alembic", "upgrade", "head"]
 
 # ---------- Producer base ----------
 FROM base-builder AS producer-builder
-COPY requirements/producer.txt requirements/producer.txt
-RUN uv pip install -r requirements/producer.txt
+RUN uv pip install -e .[producer]
 COPY . .
 
 FROM base-runtime AS producer-runtime
@@ -76,11 +73,9 @@ CMD ["python", "-m", "src.producers.trand.main"]
 
 # ---------- Scheduler ----------
 FROM base-builder AS scheduler-builder
-COPY requirements/scheduler.txt requirements/scheduler.txt
-RUN uv pip install -r requirements/scheduler.txt
+RUN uv pip install -e .[scheduler]
 COPY . .
 
 FROM base-runtime AS scheduler-runtime
 COPY --from=scheduler-builder /app/venv /app/venv
 COPY --from=scheduler-builder /app/src /app/src
-

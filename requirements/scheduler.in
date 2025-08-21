@@ -1,3 +1,0 @@
--r core.in
-taskiq==0.11.18
-taskiq_faststream==0.2.3
