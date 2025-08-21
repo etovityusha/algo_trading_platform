@@ -16,14 +16,17 @@ from src.core.clients.interface import AbstractReadOnlyClient, AbstractWriteClie
 
 
 class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
-    def __init__(self, api_key: str, api_secret: str, is_demo: bool = True) -> None:
+    def __init__(
+        self, api_key: str, api_secret: str, is_demo: bool = True, session: aiohttp.ClientSession | None = None
+    ) -> None:
         self._api_key = api_key
         self._api_secret = api_secret
         self._base_url = "https://api-testnet.bybit.com" if is_demo else "https://api.bybit.com"
         self._lot_precision = {
             "USDT": Decimal("0.01"),
         }
-        self._session = aiohttp.ClientSession()
+        self._session = session or aiohttp.ClientSession()
+        self._owns_session = session is None
 
     def _generate_signature(self, params: dict[str, Any] | str, timestamp: int) -> str:
         """Generate signature for authentication"""
@@ -267,13 +270,18 @@ class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):
         )
 
     async def close(self) -> None:
-        """Close the aiohttp session"""
-        if self._session and not self._session.closed:
+        """Close the aiohttp session if we own it"""
+        if self._owns_session and self._session and not self._session.closed:
             await self._session.close()
 
 
 class BybitStubWriteClient(BybitAsyncClient):
     """Same as BybitAsyncClient, but overrides write methods to return fake responses"""
+
+    def __init__(
+        self, api_key: str, api_secret: str, is_demo: bool = True, session: aiohttp.ClientSession | None = None
+    ) -> None:
+        super().__init__(api_key, api_secret, is_demo, session)
 
     async def get_order_status(self, order_id: str, symbol: str) -> OrderStatus | None:
         """Stub method - returns fake order status for testing"""

@@ -3,7 +3,7 @@ import logging
 
 from dishka.async_container import make_async_container
 
-from src.di.exchange import ExchangeProvider
+from src.di.exchange import ExchangeProvider, HttpClientProvider
 from src.di.momentum_config import MomentumConfigProvider
 from src.di.momentum_producer_service import MomentumProducerServiceProvider
 from src.logger import init_logging
@@ -19,6 +19,7 @@ async def main() -> None:
     settings = MomentumSettings()
     container = make_async_container(
         MomentumConfigProvider(),
+        HttpClientProvider(),
         ExchangeProvider(),
         MomentumProducerServiceProvider(),
         context={MomentumSettings: settings},

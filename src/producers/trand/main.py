@@ -4,7 +4,7 @@ import logging
 from dishka.async_container import make_async_container
 
 from src.di.config import ProducerConfigProvider
-from src.di.exchange import ExchangeProvider
+from src.di.exchange import ExchangeProvider, HttpClientProvider
 from src.di.producer_service import ProducerServiceProvider
 from src.logger import init_logging
 from src.producers.trand.config.settings import TrandSettings
@@ -19,6 +19,7 @@ async def main() -> None:
     settings = TrandSettings()
     container = make_async_container(
         ProducerConfigProvider(),
+        HttpClientProvider(),
         ExchangeProvider(),
         ProducerServiceProvider(),
         context={TrandSettings: settings},
