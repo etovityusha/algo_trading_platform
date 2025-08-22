@@ -8,21 +8,21 @@ from src.producers.strategy import Prediction, Strategy
 
 class MomentumStrategy(Strategy):
     """
-    Агрессивная моментум-стратегия, основанная на техническом анализе.
+    Aggressive momentum strategy based on technical analysis.
 
-    Использует комбинацию индикаторов:
-    - RSI для определения перекупленности/перепроданности
-    - MACD для определения силы тренда
-    - Bollinger Bands для определения волатильности и точек входа
-    - Stochastic Oscillator для подтверждения сигналов
-    - Volume Analysis для подтверждения силы движения
+    Uses combination of indicators:
+    - RSI for overbought/oversold conditions
+    - MACD for trend strength determination
+    - Bollinger Bands for volatility and entry point detection
+    - Stochastic Oscillator for signal confirmation
+    - Volume Analysis for movement strength confirmation
     """
 
     def __init__(self, client: AbstractReadOnlyClient) -> None:
         self._client = client
 
     async def predict(self, symbol: str) -> Prediction:
-        # Получаем больше свечей для более точного анализа
+        # Get more candles for more accurate analysis
         candles = await self._client.get_candles(symbol, interval="15", limit=500)
 
         closes: NDArray[np.float64] = np.array([float(c.close) for c in candles])
@@ -30,7 +30,7 @@ class MomentumStrategy(Strategy):
         lows: NDArray[np.float64] = np.array([float(c.low) for c in candles])
         volumes: NDArray[np.float64] = np.array([float(c.volume) for c in candles])
 
-        # Расчет индикаторов
+        # Calculate indicators
         rsi = self._rsi(closes, period=14)
         macd_line, signal_line, macd_histogram = self._macd(closes)
         bb_upper, bb_middle, bb_lower = self._bollinger_bands(closes, period=20, std_dev=2.0)
@@ -38,7 +38,7 @@ class MomentumStrategy(Strategy):
         atr = self._atr(highs, lows, closes, period=14)
         volume_sma = self._sma(volumes, period=20)
 
-        # Текущие значения
+        # Current values
         current_close = closes[-1]
         current_rsi = rsi[-1]
         current_macd = macd_line[-1]
@@ -53,58 +53,66 @@ class MomentumStrategy(Strategy):
         current_volume = volumes[-1]
         avg_volume = volume_sma[-1]
 
-        # Проверка на валидность данных
+        # Data validity check
         if any(np.isnan([current_rsi, current_macd, current_signal, current_stoch_k, current_atr])):
             return Prediction(symbol=symbol, action=ActionEnum.NOTHING)
 
-        # Агрессивные условия для входа в позицию
+        # Aggressive position entry conditions
         action = ActionEnum.NOTHING
         stop_loss_percent = None
         take_profit_percent = None
 
-        # Условия для ПОКУПКИ (агрессивные)
+        # BUY conditions (aggressive)
         buy_conditions = [
-            # RSI показывает начало восходящего движения
+            # RSI shows beginning of upward movement
             30 < current_rsi < 70,
-            # MACD пересекает сигнальную линию вверх или растет
+            # MACD crosses signal line up or is growing
             current_macd > current_signal or (current_macd_hist > prev_macd_hist and current_macd_hist > 0),
-            # Цена приближается к нижней полосе Боллинджера или отскакивает от нее
+            # Price approaches lower Bollinger band or bounces from it
             current_close <= current_bb_lower * 1.05,
-            # Stochastic показывает потенциал роста
+            # Stochastic shows growth potential
             current_stoch_k > current_stoch_d and current_stoch_k < 80,
-            # Повышенный объем (агрессивный фильтр)
+            # Increased volume (aggressive filter)
             current_volume > avg_volume * 1.2,
         ]
 
-        # Условия для ПРОДАЖИ (агрессивные)
+        # SELL conditions (aggressive)
         sell_conditions = [
-            # RSI показывает начало нисходящего движения
+            # RSI shows beginning of downward movement
             30 < current_rsi < 70,
-            # MACD пересекает сигнальную линию вниз или падает
+            # MACD crosses signal line down or is falling
             current_macd < current_signal or (current_macd_hist < prev_macd_hist and current_macd_hist < 0),
-            # Цена приближается к верхней полосе Боллинджера или отскакивает от нее
+            # Price approaches upper Bollinger band or bounces from it
             current_close >= current_bb_upper * 0.95,
-            # Stochastic показывает потенциал падения
+            # Stochastic shows decline potential
             current_stoch_k < current_stoch_d and current_stoch_k > 20,
-            # Повышенный объем (агрессивный фильтр)
+            # Increased volume (aggressive filter)
             current_volume > avg_volume * 1.2,
         ]
 
-        # Агрессивные параметры риска (более узкие стопы и широкие тейки)
-        atr_multiplier_sl = 1.2  # Узкий стоп-лосс для агрессивной стратегии
-        atr_multiplier_tp = 3.0  # Широкий тейк-профит для максимизации прибыли
+        # Aggressive risk parameters (tighter stops and wider takes)
+        atr_multiplier_sl = 1.2  # Tight stop-loss for aggressive strategy
+        atr_multiplier_tp = 3.0  # Wide take-profit for profit maximization
 
-        if sum(buy_conditions) >= 4:  # Требуем выполнения минимум 4 из 5 условий
+        if sum(buy_conditions) >= 4:  # Require at least 4 out of 5 conditions
             action = ActionEnum.BUY
-            stop_loss_percent = (atr_multiplier_sl * current_atr / current_close) * 100
-            take_profit_percent = (atr_multiplier_tp * current_atr / current_close) * 100
+            # Calculate SL/TP with minimum threshold consideration
+            calculated_sl = (atr_multiplier_sl * current_atr / current_close) * 100
+            calculated_tp = (atr_multiplier_tp * current_atr / current_close) * 100
+            stop_loss_percent = max(calculated_sl, 0.15)  # Minimum 0.15%
+            take_profit_percent = max(calculated_tp, 0.25)  # Minimum 0.25%
 
-        elif sum(sell_conditions) >= 4:  # Требуем выполнения минимум 4 из 5 условий
+        elif sum(sell_conditions) >= 4:  # Require at least 4 out of 5 conditions
             action = ActionEnum.SELL
-            stop_loss_percent = (atr_multiplier_sl * current_atr / current_close) * 100
-            take_profit_percent = (atr_multiplier_tp * current_atr / current_close) * 100
+            # Calculate SL/TP with minimum threshold consideration
+            calculated_sl = (atr_multiplier_sl * current_atr / current_close) * 100
+            calculated_tp = (atr_multiplier_tp * current_atr / current_close) * 100
+            stop_loss_percent = max(calculated_sl, 0.15)  # Minimum 0.15%
+            take_profit_percent = max(calculated_tp, 0.25)  # Minimum 0.25%
 
-        return Prediction(symbol=symbol, action=action, stop_loss=stop_loss_percent, take_profit=take_profit_percent)
+        return Prediction(
+            symbol=symbol, action=action, stop_loss_percent=stop_loss_percent, take_profit_percent=take_profit_percent
+        )
 
     @classmethod
     def _rsi(cls, values: NDArray[np.float64], period: int = 14) -> NDArray[np.float64]:
@@ -201,7 +209,7 @@ class MomentumStrategy(Strategy):
     def _atr(
         cls, highs: NDArray[np.float64], lows: NDArray[np.float64], closes: NDArray[np.float64], period: int = 14
     ) -> NDArray[np.float64]:
-        """Average True Range"""
+        """Calculate Average True Range"""
         tr1 = highs[1:] - lows[1:]
         tr2 = np.abs(highs[1:] - closes[:-1])
         tr3 = np.abs(lows[1:] - closes[:-1])

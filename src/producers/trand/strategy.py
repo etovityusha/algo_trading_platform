@@ -24,7 +24,7 @@ class TrandStrategy(Strategy):
         rsi = self._relative_strength_index(closes, rsi_period)
         adx_val = self._adx(highs, lows, closes, adx_period)
 
-        # Добавляем расчет ATR для динамических SL/TP
+        # Add ATR calculation for dynamic SL/TP
         atr = self._average_true_range(highs, lows, closes, 14)
 
         last_close = closes[-1]
@@ -33,7 +33,7 @@ class TrandStrategy(Strategy):
         last_adx = adx_val[-1]
         last_atr = atr[-1]
 
-        # Фильтр по волатильности
+        # Volatility filter
         volatility_filter = last_atr > np.mean(atr[-20:]) * 0.8
 
         action = ActionEnum.NOTHING
@@ -41,25 +41,31 @@ class TrandStrategy(Strategy):
         take_profit_percent = None
 
         if last_adx > 25 and volatility_filter and not np.isnan(last_atr):
-            # Улучшенные границы RSI
+            # Improved RSI boundaries
             if last_close > last_ma and last_rsi < 65:
                 action = ActionEnum.BUY
-                # SL и TP для покупки
-                stop_loss_percent = (1.5 * last_atr / last_close) * 100  # 1.5 ATR вниз
-                take_profit_percent = (2.5 * last_atr / last_close) * 100  # 2.5 ATR вверх
+                # Calculate SL/TP with minimum threshold consideration
+                calculated_sl = (1.5 * last_atr / last_close) * 100
+                calculated_tp = (2.5 * last_atr / last_close) * 100
+                stop_loss_percent = max(calculated_sl, 0.15)  # Minimum 0.15%
+                take_profit_percent = max(calculated_tp, 0.25)  # Minimum 0.25%
             elif last_close < last_ma and last_rsi > 35:
                 action = ActionEnum.SELL
-                # SL и TP для продажи
-                stop_loss_percent = (1.5 * last_atr / last_close) * 100  # 1.5 ATR вверх
-                take_profit_percent = (2.5 * last_atr / last_close) * 100  # 2.5 ATR вниз
+                # Calculate SL/TP with minimum threshold consideration
+                calculated_sl = (1.5 * last_atr / last_close) * 100
+                calculated_tp = (2.5 * last_atr / last_close) * 100
+                stop_loss_percent = max(calculated_sl, 0.15)  # Minimum 0.15%
+                take_profit_percent = max(calculated_tp, 0.25)  # Minimum 0.25%
 
-        return Prediction(symbol=symbol, action=action, stop_loss=stop_loss_percent, take_profit=take_profit_percent)
+        return Prediction(
+            symbol=symbol, action=action, stop_loss_percent=stop_loss_percent, take_profit_percent=take_profit_percent
+        )
 
     @classmethod
     def _average_true_range(
         cls, high: NDArray[np.float64], low: NDArray[np.float64], close: NDArray[np.float64], period: int = 14
     ) -> NDArray[np.float64]:
-        """Расчет Average True Range для определения волатильности"""
+        """Calculate Average True Range for volatility assessment"""
         tr1 = high[1:] - low[1:]
         tr2 = np.abs(high[1:] - close[:-1])
         tr3 = np.abs(low[1:] - close[:-1])

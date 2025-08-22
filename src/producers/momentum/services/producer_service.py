@@ -52,8 +52,8 @@ class ProducerService:
         message = TradingSignal(
             symbol=ticker,
             amount=Decimal("150"),  # Увеличенный размер для агрессивной стратегии
-            take_profit=prediction.take_profit,
-            stop_loss=prediction.stop_loss,
+            take_profit=prediction.take_profit_percent,
+            stop_loss=prediction.stop_loss_percent,
             action=prediction.action,
             source="momentum",
         )
