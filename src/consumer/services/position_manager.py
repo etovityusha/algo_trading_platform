@@ -47,11 +47,15 @@ class PositionManagerService:
 
         if status == PositionInternalStatus.CLOSED_BY_TP:
             logger.info(f"Position {position_id} closed by Take Profit")
-            await uow_session.deals.mark_take_profit_executed(position_id)
+            # Get current price for sell_price
+            current_price = float(await self._read_client.get_ticker_price(position.symbol))
+            await uow_session.deals.mark_take_profit_executed(position_id, current_price)
 
         elif status == PositionInternalStatus.CLOSED_BY_SL:
             logger.info(f"Position {position_id} closed by Stop Loss")
-            await uow_session.deals.mark_stop_loss_executed(position_id)
+            # Get current price for sell_price
+            current_price = float(await self._read_client.get_ticker_price(position.symbol))
+            await uow_session.deals.mark_stop_loss_executed(position_id, current_price)
 
         elif status == PositionInternalStatus.OPEN:
             logger.debug(f"Position {position_id} is still open")

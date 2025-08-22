@@ -168,15 +168,15 @@ class DealRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def mark_take_profit_executed(self, deal_id: str) -> None:
+    async def mark_take_profit_executed(self, deal_id: str, sell_price: float) -> None:
         """Mark a deal as take profit executed."""
-        stmt = update(Deal).where(Deal.id == deal_id).values(is_take_profit_executed=True)
+        stmt = update(Deal).where(Deal.id == deal_id).values(is_take_profit_executed=True, sell_price=sell_price)
         await self.session.execute(stmt)
         await self.session.flush()
 
-    async def mark_stop_loss_executed(self, deal_id: str) -> None:
+    async def mark_stop_loss_executed(self, deal_id: str, sell_price: float) -> None:
         """Mark a deal as stop loss executed."""
-        stmt = update(Deal).where(Deal.id == deal_id).values(is_stop_loss_executed=True)
+        stmt = update(Deal).where(Deal.id == deal_id).values(is_stop_loss_executed=True, sell_price=sell_price)
         await self.session.execute(stmt)
         await self.session.flush()
 
