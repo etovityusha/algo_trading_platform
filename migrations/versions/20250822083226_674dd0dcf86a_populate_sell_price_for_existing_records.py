@@ -29,35 +29,41 @@ def upgrade() -> None:
 
     # Update TP executed positions
     connection.execute(
-        sa.text("""
+        sa.text(
+            """
         UPDATE deal
         SET sell_price = take_profit_price
         WHERE is_take_profit_executed = true
         AND sell_price IS NULL
         AND take_profit_price IS NOT NULL
-    """)
+    """
+        )
     )
 
     # Update SL executed positions
     connection.execute(
-        sa.text("""
+        sa.text(
+            """
         UPDATE deal
         SET sell_price = stop_loss_price
         WHERE is_stop_loss_executed = true
         AND sell_price IS NULL
         AND stop_loss_price IS NOT NULL
-    """)
+    """
+        )
     )
 
     # Update manually closed positions (use buy price as fallback)
     connection.execute(
-        sa.text("""
+        sa.text(
+            """
         UPDATE deal
         SET sell_price = price
         WHERE is_manually_closed = true
         AND sell_price IS NULL
         AND price IS NOT NULL
-    """)
+    """
+        )
     )
 
 
