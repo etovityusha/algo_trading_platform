@@ -1,9 +1,8 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.clients.interface import AbstractReadOnlyClient
 from src.core.enums import ActionEnum
-from src.producers.strategy import Prediction, Strategy
+from src.producers.strategy import Prediction, Strategy, StrategyConfig
 
 
 class MomentumStrategy(Strategy):
@@ -18,12 +17,24 @@ class MomentumStrategy(Strategy):
     - Volume Analysis for movement strength confirmation
     """
 
-    def __init__(self, client: AbstractReadOnlyClient) -> None:
-        self._client = client
+    def get_config(self) -> StrategyConfig:
+        """Get MomentumStrategy configuration parameters."""
+        return StrategyConfig(
+            name="MomentumStrategy",
+            signal_interval_minutes=5,  # Check signals every 5 minutes (aggressive)
+            candle_interval="15",  # Use 15-minute candles for analysis
+            lookback_periods=500,  # Need 500 candles for analysis
+            position_size_usd=150.0,  # Larger position size for aggressive strategy
+            description="Aggressive momentum strategy using RSI, MACD, Bollinger Bands, Stochastic, Volume, ATR",
+        )
 
     async def predict(self, symbol: str) -> Prediction:
         # Get more candles for more accurate analysis
-        candles = await self._client.get_candles(symbol, interval="15", limit=500)
+        candles = await self._client.get_candles(
+            symbol=symbol,
+            interval=self.get_config().candle_interval,
+            limit=self.get_config().lookback_periods,
+        )
 
         closes: NDArray[np.float64] = np.array([float(c.close) for c in candles])
         highs: NDArray[np.float64] = np.array([float(c.high) for c in candles])

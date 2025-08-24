@@ -2,6 +2,7 @@ import abc
 import dataclasses
 from typing import NewType
 
+from core.clients.interface import AbstractReadOnlyClient
 from src.core.enums import ActionEnum
 
 Percent = NewType("Percent", float)
@@ -56,7 +57,36 @@ class Prediction:
             raise ValueError("symbol must be a non-empty string")
 
 
+@dataclasses.dataclass
+class StrategyConfig:
+    """
+    Strategy configuration parameters required for backtesting.
+    """
+
+    name: str  # Strategy name for identification
+    signal_interval_minutes: int  # How often strategy generates signals
+    candle_interval: str  # Candle interval for analysis (e.g., '15', '60')
+    lookback_periods: int  # Number of historical candles needed
+    position_size_usd: float  # Default position size in USD
+    description: str = ""  # Optional strategy description
+
+
 class Strategy(abc.ABC):
+    """
+    Abstract base class for trading strategies.
+
+    All strategies must implement predict() and provide configuration via get_config().
+    """
+
+    def __init__(self, client: AbstractReadOnlyClient) -> None:
+        self._client = client
+
     @abc.abstractmethod
     async def predict(self, symbol: str) -> Prediction:
+        """Generate trading prediction for a symbol."""
+        pass
+
+    @abc.abstractmethod
+    def get_config(self) -> StrategyConfig:
+        """Get strategy configuration parameters."""
         pass

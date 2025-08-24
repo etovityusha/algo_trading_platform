@@ -28,7 +28,7 @@ async def main() -> None:
     async with container() as request_container:
         producer_service = await request_container.get(ProducerService)
         try:
-            await producer_service.run(interval_seconds=600)
+            await producer_service.run()
         finally:
             # Cleanup is handled by dishka container
             pass

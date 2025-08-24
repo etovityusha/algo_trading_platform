@@ -29,7 +29,7 @@ async def main() -> None:
         producer_service = await request_container.get(ProducerService)
         try:
             # Запуск с интервалом 5 минут для агрессивной торговли
-            await producer_service.run(interval_seconds=300)
+            await producer_service.run()
         finally:
             # Cleanup is handled by dishka container
             pass

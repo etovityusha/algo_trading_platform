@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from decimal import Decimal
 
 from faststream.rabbit import RabbitBroker, RabbitQueue
@@ -22,15 +23,17 @@ class ProducerService:
         self.broker = broker
         self.queue = queue
         self.tickers = tickers
+        self.strategy_config = strategy.get_config()
 
-    async def run(self, interval_seconds: int = 300) -> None:
+    async def run(self) -> None:
         """Run the momentum producer with 5-minute intervals for aggressive trading."""
         logger.info(f"Starting momentum producer with {len(self.tickers)} tickers")
         try:
             while True:
+                now = time.time()
                 await self._process_all_tickers()
-                logger.info(f"Sleeping for {interval_seconds} seconds")
-                await asyncio.sleep(interval_seconds)
+                sleep_time = (self.strategy_config.signal_interval_minutes * 60) - (time.time() - now)
+                await asyncio.sleep(sleep_time)
         except Exception as e:
             logger.exception(f"Momentum producer error: {e}")
             raise

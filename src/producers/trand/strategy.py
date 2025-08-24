@@ -1,17 +1,29 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.clients.interface import AbstractReadOnlyClient
 from src.core.enums import ActionEnum
-from src.producers.strategy import Prediction, Strategy
+from src.producers.strategy import Prediction, Strategy, StrategyConfig
 
 
 class TrandStrategy(Strategy):
-    def __init__(self, client: AbstractReadOnlyClient) -> None:
-        self._client = client
+
+    def get_config(self) -> StrategyConfig:
+        """Get TrandStrategy configuration parameters."""
+        return StrategyConfig(
+            name="TrandStrategy",
+            signal_interval_minutes=10,  # Check signals every 10 minutes
+            candle_interval="60",  # Use 60-minute candles for analysis
+            lookback_periods=200,  # Need 200 candles for analysis
+            position_size_usd=100.0,  # Conservative position size
+            description="Trend-following strategy using MA, RSI, ADX indicators",
+        )
 
     async def predict(self, symbol: str) -> Prediction:
-        candles = await self._client.get_candles(symbol, interval="60", limit=200)
+        candles = await self._client.get_candles(
+            symbol=symbol,
+            interval=self.get_config().candle_interval,
+            limit=self.get_config().lookback_periods,
+        )
         closes: NDArray[np.float64] = np.array([float(c.close) for c in candles])
         highs: NDArray[np.float64] = np.array([float(c.high) for c in candles])
         lows: NDArray[np.float64] = np.array([float(c.low) for c in candles])
