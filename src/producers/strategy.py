@@ -1,7 +1,9 @@
 import abc
 import dataclasses
+import datetime
 from typing import NewType
 
+from core.clients.dto import Candle
 from core.clients.interface import AbstractReadOnlyClient
 from src.core.enums import ActionEnum
 
@@ -82,9 +84,23 @@ class Strategy(abc.ABC):
         self._client = client
 
     @abc.abstractmethod
-    async def predict(self, symbol: str) -> Prediction:
-        """Generate trading prediction for a symbol."""
+    async def _predict(self, symbol: str, candles: list[Candle]) -> Prediction:
         pass
+
+    async def predict(self, symbol: str, prediction_time: datetime.datetime | None = None) -> Prediction:
+        config = self.get_config()
+        if prediction_time is None:
+            start = None
+        else:
+            interval_minutes = datetime.timedelta(minutes=int(config.candle_interval))
+            start = prediction_time - (interval_minutes * config.lookback_periods)
+        candles = await self._client.get_candles(
+            symbol=symbol,
+            interval=config.candle_interval,
+            limit=config.lookback_periods,
+            start=start,
+        )
+        return await self._predict(symbol, candles)
 
     @abc.abstractmethod
     def get_config(self) -> StrategyConfig:

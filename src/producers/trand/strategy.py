@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
+from core.clients.dto import Candle
 from src.core.enums import ActionEnum
 from src.producers.strategy import Prediction, Strategy, StrategyConfig
 
@@ -18,12 +19,7 @@ class TrandStrategy(Strategy):
             description="Trend-following strategy using MA, RSI, ADX indicators",
         )
 
-    async def predict(self, symbol: str) -> Prediction:
-        candles = await self._client.get_candles(
-            symbol=symbol,
-            interval=self.get_config().candle_interval,
-            limit=self.get_config().lookback_periods,
-        )
+    async def _predict(self, symbol: str, candles: list[Candle]) -> Prediction:
         closes: NDArray[np.float64] = np.array([float(c.close) for c in candles])
         highs: NDArray[np.float64] = np.array([float(c.high) for c in candles])
         lows: NDArray[np.float64] = np.array([float(c.low) for c in candles])
