@@ -1,10 +1,10 @@
 from dishka import Provider, Scope, provide
 from faststream.rabbit import QueueType, RabbitBroker, RabbitQueue
 
-from src.configs import RabbitSettings
-from src.core.clients.interface import AbstractReadOnlyClient
-from src.producers.trand.services.producer_service import ProducerService
-from src.producers.trand.strategy import TrandStrategy
+from configs import RabbitSettings
+from core.clients.interface import AbstractReadOnlyClient
+from producers.trand.services.producer_service import ProducerService
+from producers.trand.strategy import TrandStrategy
 
 
 class ProducerServiceProvider(Provider):

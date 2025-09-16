@@ -1,11 +1,11 @@
 import logging
 from decimal import Decimal
 
+from consumer.uow import UoWSession
+from core.clients.dto import BuyResponse
 from core.clients.interface import AbstractWriteClient
-from src.consumer.uow import UoWSession
-from src.core.clients.dto import BuyResponse
-from src.core.dto import PositionStatus, TradingSignal
-from src.core.enums import ActionEnum
+from core.dto import PositionStatus, TradingSignal
+from core.enums import ActionEnum
 
 logger = logging.getLogger(__name__)
 

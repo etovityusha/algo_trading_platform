@@ -3,8 +3,8 @@ from collections.abc import AsyncIterator
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
-from src.configs import PostgresSettings
-from src.consumer.uow import UnitOfWork, UoWSession
+from configs import PostgresSettings
+from consumer.uow import UnitOfWork, UoWSession
 
 
 class DatabaseProvider(Provider):

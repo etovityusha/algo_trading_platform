@@ -2,18 +2,17 @@ import numpy as np
 from numpy.typing import NDArray
 
 from core.clients.dto import Candle
-from src.core.enums import ActionEnum
-from src.producers.strategy import Prediction, Strategy, StrategyConfig
+from core.enums import ActionEnum
+from producers.strategy import Prediction, Strategy, StrategyConfig
 
 
 class TrandStrategy(Strategy):
-
     def get_config(self) -> StrategyConfig:
         """Get TrandStrategy configuration parameters."""
         return StrategyConfig(
             name="TrandStrategy",
-            signal_interval_minutes=10,  # Check signals every 10 minutes
-            candle_interval="60",  # Use 60-minute candles for analysis
+            signal_interval_minutes=15,
+            candle_interval="15",
             lookback_periods=200,  # Need 200 candles for analysis
             position_size_usd=100.0,  # Conservative position size
             description="Trend-following strategy using MA, RSI, ADX indicators",

@@ -1,8 +1,8 @@
 from dishka import Provider, Scope, from_context, provide
 
-from src.configs import BybitSettings, PostgresSettings, RabbitSettings
-from src.consumer.config.settings import ConsumerSettings
-from src.producers.trand.config.settings import TrandSettings
+from configs import BybitSettings, PostgresSettings, RabbitSettings
+from consumer.config.settings import ConsumerSettings
+from producers.trand.config.settings import TrandSettings
 
 
 class ConsumerConfigProvider(Provider):

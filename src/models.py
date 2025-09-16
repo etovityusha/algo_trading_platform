@@ -11,7 +11,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.types import TypeDecorator
 from uuid_extensions import uuid7
 
-from src.core.enums import ActionEnum
+from core.enums import ActionEnum
 
 
 class Base(DeclarativeBase):

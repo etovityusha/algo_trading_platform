@@ -1,9 +1,9 @@
 from dishka import Provider, Scope, provide
 
-from src.consumer.services.position_manager import PositionManagerService
-from src.consumer.services.trading import TradingService
-from src.consumer.uow import UnitOfWork, UoWSession
-from src.core.clients.interface import AbstractReadOnlyClient, AbstractWriteClient
+from consumer.services.position_manager import PositionManagerService
+from consumer.services.trading import TradingService
+from consumer.uow import UnitOfWork, UoWSession
+from core.clients.interface import AbstractReadOnlyClient, AbstractWriteClient
 
 
 class ServiceProvider(Provider):

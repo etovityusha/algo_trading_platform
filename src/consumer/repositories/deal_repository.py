@@ -6,10 +6,10 @@ from decimal import Decimal
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.clients.dto import BuyResponse
-from src.core.dto import TradingSignal
-from src.core.enums import ActionEnum
-from src.models import Deal
+from core.clients.dto import BuyResponse
+from core.dto import TradingSignal
+from core.enums import ActionEnum
+from models import Deal
 
 
 class DealRepository:

@@ -5,8 +5,8 @@ from decimal import Decimal
 
 from faststream.rabbit import RabbitBroker, RabbitQueue
 
-from src.core.dto import TradingSignal
-from src.producers.momentum.strategy import MomentumStrategy
+from core.dto import TradingSignal
+from producers.momentum.strategy import MomentumStrategy
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 from dishka import Provider, Scope, from_context, provide
 
-from src.configs import BybitSettings, RabbitSettings
-from src.producers.momentum.config.settings import MomentumSettings
+from configs import BybitSettings, RabbitSettings
+from producers.momentum.config.settings import MomentumSettings
 
 
 class MomentumConfigProvider(Provider):

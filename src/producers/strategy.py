@@ -5,7 +5,7 @@ from typing import NewType
 
 from core.clients.dto import Candle
 from core.clients.interface import AbstractReadOnlyClient
-from src.core.enums import ActionEnum
+from core.enums import ActionEnum
 
 Percent = NewType("Percent", float)
 

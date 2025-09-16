@@ -1,11 +1,11 @@
 import logging
 from typing import Protocol
 
-from src.consumer.uow import UnitOfWork
-from src.core.clients.interface import AbstractReadOnlyClient
-from src.core.enums import PositionInternalStatus
-from src.core.services.order_processor import OrderProcessor
-from src.models import Deal
+from consumer.uow import UnitOfWork
+from core.clients.interface import AbstractReadOnlyClient
+from core.enums import PositionInternalStatus
+from core.services.order_processor import OrderProcessor
+from models import Deal
 
 logger = logging.getLogger(__name__)
 

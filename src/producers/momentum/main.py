@@ -3,12 +3,12 @@ import logging
 
 from dishka.async_container import make_async_container
 
-from src.di.exchange import ExchangeProvider, HttpClientProvider
-from src.di.momentum_config import MomentumConfigProvider
-from src.di.momentum_producer_service import MomentumProducerServiceProvider
-from src.logger import init_logging
-from src.producers.momentum.config.settings import MomentumSettings
-from src.producers.momentum.services.producer_service import ProducerService
+from di.exchange import ExchangeProvider, HttpClientProvider
+from di.momentum_config import MomentumConfigProvider
+from di.momentum_producer_service import MomentumProducerServiceProvider
+from logger import init_logging
+from producers.momentum.config.settings import MomentumSettings
+from producers.momentum.services.producer_service import ProducerService
 
 logger = logging.getLogger(__name__)
 

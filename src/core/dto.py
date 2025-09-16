@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from src.core.enums import ActionEnum
+from core.enums import ActionEnum
 
 if TYPE_CHECKING:
-    from src.models import Deal
+    from models import Deal
 
 
 @dataclasses.dataclass

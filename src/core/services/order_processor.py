@@ -1,8 +1,8 @@
 import logging
 
-from src.core.clients.interface import AbstractReadOnlyClient
-from src.core.enums import PositionInternalStatus
-from src.models import Deal
+from core.clients.interface import AbstractReadOnlyClient
+from core.enums import PositionInternalStatus
+from models import Deal
 
 logger = logging.getLogger(__name__)
 

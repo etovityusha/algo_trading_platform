@@ -3,12 +3,12 @@ import logging
 
 from dishka.async_container import make_async_container
 
-from src.di.config import ProducerConfigProvider
-from src.di.exchange import ExchangeProvider, HttpClientProvider
-from src.di.producer_service import ProducerServiceProvider
-from src.logger import init_logging
-from src.producers.trand.config.settings import TrandSettings
-from src.producers.trand.services.producer_service import ProducerService
+from di.config import ProducerConfigProvider
+from di.exchange import ExchangeProvider, HttpClientProvider
+from di.producer_service import ProducerServiceProvider
+from logger import init_logging
+from producers.trand.config.settings import TrandSettings
+from producers.trand.services.producer_service import ProducerService
 
 logger = logging.getLogger(__name__)
 

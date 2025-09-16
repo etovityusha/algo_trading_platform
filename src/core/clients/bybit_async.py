@@ -10,9 +10,9 @@ from urllib.parse import urlencode
 import aiohttp
 from uuid_extensions import uuid7
 
+from core.clients.dto import BuyResponse, Candle, OrderStatus
+from core.clients.interface import AbstractReadOnlyClient, AbstractWriteClient
 from core.enums import ExchangeOrderStatus
-from src.core.clients.dto import BuyResponse, Candle, OrderStatus
-from src.core.clients.interface import AbstractReadOnlyClient, AbstractWriteClient
 
 
 class BybitAsyncClient(AbstractReadOnlyClient, AbstractWriteClient):

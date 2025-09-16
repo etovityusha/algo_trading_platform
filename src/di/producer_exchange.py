@@ -4,9 +4,9 @@ import aiohttp
 from dishka import Scope
 from dishka.provider import Provider, provide
 
-from src.configs import BybitSettings
-from src.core.clients.bybit_async import BybitAsyncClient
-from src.core.clients.interface import AbstractReadOnlyClient
+from configs import BybitSettings
+from core.clients.bybit_async import BybitAsyncClient
+from core.clients.interface import AbstractReadOnlyClient
 
 
 class ProducerHttpClientProvider(Provider):

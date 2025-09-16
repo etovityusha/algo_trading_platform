@@ -6,11 +6,11 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from src.consumer.repositories.deal_repository import DealRepository
-from src.core.clients.dto import Candle
-from src.core.clients.interface import AbstractReadOnlyClient
-from src.core.enums import ActionEnum
-from src.models import Deal
+from consumer.repositories.deal_repository import DealRepository
+from core.clients.dto import Candle
+from core.clients.interface import AbstractReadOnlyClient
+from core.enums import ActionEnum
+from models import Deal
 
 
 @dataclass(slots=True)

@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.session import async_sessionmaker
 
-from src.consumer.repositories.deal_repository import DealRepository
+from consumer.repositories.deal_repository import DealRepository
 
 
 class UnitOfWork:

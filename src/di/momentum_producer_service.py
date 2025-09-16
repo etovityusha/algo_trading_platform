@@ -1,10 +1,10 @@
 from dishka import Provider, Scope, provide
 from faststream.rabbit import QueueType, RabbitBroker, RabbitQueue
 
-from src.configs import RabbitSettings
-from src.core.clients.interface import AbstractReadOnlyClient
-from src.producers.momentum.services.producer_service import ProducerService
-from src.producers.momentum.strategy import MomentumStrategy
+from configs import RabbitSettings
+from core.clients.interface import AbstractReadOnlyClient
+from producers.momentum.services.producer_service import ProducerService
+from producers.momentum.strategy import MomentumStrategy
 
 
 class MomentumProducerServiceProvider(Provider):

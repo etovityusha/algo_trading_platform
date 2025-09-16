@@ -5,14 +5,13 @@ from decimal import Decimal
 
 from faststream.rabbit import RabbitBroker, RabbitQueue
 
-from src.core.dto import TradingSignal
-from src.producers.trand.strategy import TrandStrategy
+from core.dto import TradingSignal
+from producers.trand.strategy import TrandStrategy
 
 logger = logging.getLogger(__name__)
 
 
 class ProducerService:
-
     def __init__(
         self,
         strategy: TrandStrategy,

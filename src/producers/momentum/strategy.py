@@ -2,8 +2,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 from core.clients.dto import Candle
-from src.core.enums import ActionEnum
-from src.producers.strategy import Prediction, Strategy, StrategyConfig
+from core.enums import ActionEnum
+from producers.strategy import Prediction, Strategy, StrategyConfig
 
 
 class MomentumStrategy(Strategy):
@@ -22,7 +22,7 @@ class MomentumStrategy(Strategy):
         """Get MomentumStrategy configuration parameters."""
         return StrategyConfig(
             name="MomentumStrategy",
-            signal_interval_minutes=5,  # Check signals every 5 minutes (aggressive)
+            signal_interval_minutes=15,  # Check signals every 5 minutes (aggressive)
             candle_interval="15",  # Use 15-minute candles for analysis
             lookback_periods=500,  # Need 500 candles for analysis
             position_size_usd=150.0,  # Larger position size for aggressive strategy

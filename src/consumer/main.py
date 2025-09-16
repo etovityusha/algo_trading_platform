@@ -6,15 +6,15 @@ from dishka.integrations import faststream as faststream_integration
 from faststream import FastStream
 from faststream.rabbit import QueueType, RabbitBroker, RabbitQueue
 
-from src.consumer.config.settings import ConsumerSettings
-from src.consumer.services.position_manager import PositionManagerService
-from src.consumer.services.trading import TradingService
-from src.core.dto import TradingSignal
-from src.di.config import ConsumerConfigProvider
-from src.di.database import DatabaseProvider
-from src.di.exchange import ConsumerExchangeProvider, HttpClientProvider
-from src.di.service import ServiceProvider
-from src.logger import init_logging
+from consumer.config.settings import ConsumerSettings
+from consumer.services.position_manager import PositionManagerService
+from consumer.services.trading import TradingService
+from core.dto import TradingSignal
+from di.config import ConsumerConfigProvider
+from di.database import DatabaseProvider
+from di.exchange import ConsumerExchangeProvider, HttpClientProvider
+from di.service import ServiceProvider
+from logger import init_logging
 
 logger = logging.getLogger(__name__)
 
