@@ -1,7 +1,7 @@
 import datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, Numeric, String, func
+from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, Index, Integer, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -65,3 +65,38 @@ class Deal(Base):
 
     action: Mapped[ActionEnum] = mapped_column(Enum(ActionEnum), nullable=False)
     source: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class BacktestResult(Base):
+    __tablename__ = "backtest_result"
+    __table_args__ = (Index("ix_backtest_result_params_hash", "params_hash"),)
+
+    id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid7,
+        unique=True,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime.datetime] = mapped_column(UTCNaiveDateTime(), server_default=func.now(), nullable=False)
+
+    # Backtest parameters for duplicate detection
+    params_hash: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    symbol: Mapped[str] = mapped_column(String, nullable=False)
+    strategy_name: Mapped[str] = mapped_column(String, nullable=False)
+    start_date: Mapped[datetime.datetime] = mapped_column(UTCNaiveDateTime(), nullable=False)
+    end_date: Mapped[datetime.datetime] = mapped_column(UTCNaiveDateTime(), nullable=False)
+    signal_interval_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
+    candle_interval: Mapped[str] = mapped_column(String, nullable=False)
+    lookback_periods: Mapped[int] = mapped_column(Integer, nullable=False)
+    position_size_usd: Mapped[float] = mapped_column(Float, nullable=False)
+    strategy_params: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    # Results
+    total_trades: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_return_percent: Mapped[float] = mapped_column(Float, nullable=False)
+    win_rate: Mapped[float] = mapped_column(Float, nullable=False)
+    total_income: Mapped[float] = mapped_column(Float, nullable=False)
+    total_volume: Mapped[float] = mapped_column(Float, nullable=False)
+    trades_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Detailed trades information

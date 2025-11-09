@@ -64,6 +64,10 @@ services:
       dockerfile: Dockerfile
       target: migrator-runtime
     env_file: .env
+    volumes:
+      - ./src:/app/src:ro
+      - ./migrations:/app/migrations:ro
+      - ./alembic.ini:/app/alembic.ini:ro
     depends_on:
       db:
         condition: service_healthy
@@ -76,6 +80,10 @@ services:
       dockerfile: Dockerfile
       target: consumer-runtime
     env_file: .env
+    volumes:
+      - ./src:/app/src:ro
+      - ./migrations:/app/migrations:ro
+      - ./alembic.ini:/app/alembic.ini:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -93,6 +101,8 @@ services:
       dockerfile: Dockerfile
       target: trand-runtime
     env_file: .env
+    volumes:
+      - ./src:/app/src:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -106,6 +116,8 @@ services:
       dockerfile: Dockerfile
       target: momentum-runtime
     env_file: .env
+    volumes:
+      - ./src:/app/src:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -119,10 +131,33 @@ services:
       dockerfile: Dockerfile
       target: scheduler-runtime
     env_file: .env
+    volumes:
+      - ./src:/app/src:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
     command: ["taskiq", "scheduler", "src.scheduler:scheduler"]
+    restart: unless-stopped
+    networks:
+      - trading_network
+
+  backtester:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backtester-runtime
+    env_file: .env
+    volumes:
+      - ./src:/app/src:ro
+      - ./migrations:/app/migrations:ro
+      - ./alembic.ini:/app/alembic.ini:ro
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - trading_network

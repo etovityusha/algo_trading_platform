@@ -93,3 +93,21 @@ COPY . .
 FROM base-runtime AS scheduler-runtime
 COPY --from=scheduler-builder /app/venv /app/venv
 COPY --from=scheduler-builder /app/src /app/src
+
+# ---------- Backtester ----------
+FROM base-builder AS backtester-builder
+# Install consumer and producer dependencies (backtester needs both)
+RUN uv pip install -e .[consumer,producer]
+# Copy code only after dependencies are installed
+COPY . .
+
+FROM base-runtime AS backtester-runtime
+# Extra runtime libs for numpy/pandas/ta
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=backtester-builder /app/venv /app/venv
+COPY --from=backtester-builder /app/src /app/src
+COPY --from=backtester-builder /app/migrations /app/migrations
+COPY --from=backtester-builder /app/alembic.ini /app/alembic.ini
+CMD ["faststream", "run", "src.backtester.main:app"]

@@ -28,6 +28,8 @@ class Trade:
     def pnl_percent(self) -> float:
         if not self.is_closed:
             return 0.0
+        if self.close_price is None:
+            raise ValueError
         return float((self.close_price - self.open_price) / self.open_price * 100)
 
     @property
@@ -39,6 +41,8 @@ class Trade:
         if not self.is_closed:
             return Decimal(0)
         units = Decimal(self.position_size_usd) / self.open_price
+        if self.close_price is None:
+            raise ValueError
         return (self.close_price - self.open_price) * units
 
 
